@@ -1,0 +1,10 @@
+# Entornos y editores
+.idea/
+.vscode/
+
+# Node.js
+node_modules/
+.env
+
+# Logs
+npm-debug.log*
