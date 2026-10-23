@@ -373,3 +373,29 @@ CREATE TRIGGER trg_auditar_diagnostico
 AFTER UPDATE ON Diagnostico
 FOR EACH ROW
 EXECUTE FUNCTION fn_auditoria_diagnostico();
+
+-- Vista Materializada: Estadísticas de Atención por Especie y Sede
+DROP MATERIALIZED VIEW IF EXISTS mv_estadisticas_atencion;
+
+CREATE MATERIALIZED VIEW mv_estadisticas_atencion AS
+SELECT es.tipo   AS especie,
+       s.nombre  AS sede,
+       d.nombre  AS diagnostico,
+       COUNT(DISTINCT ac.idAtencion) AS cantidad_atenciones
+FROM AtencionClinica ac
+JOIN FichaClinica fc ON fc.idFicha = ac.idFicha
+JOIN Mascota m       ON m.idMascota = fc.idMascota
+JOIN Especie es      ON es.idEspecie = m.idEspecie
+JOIN Empleado e      ON e.idEmpleado = ac.idVeterinario
+JOIN Sede s          ON s.idSede = e.idSede
+JOIN Diagnostico d   ON d.idAtencion = ac.idAtencion
+WHERE ac.fecha >= current_date - INTERVAL '12 months'
+GROUP BY es.tipo, s.nombre, d.nombre;
+
+-- Función para refrescar la vista (el backend la llama una vez al día)
+CREATE OR REPLACE FUNCTION fn_refrescar_estadisticas()
+RETURNS void AS $$
+BEGIN
+    REFRESH MATERIALIZED VIEW mv_estadisticas_atencion;
+END;
+$$ LANGUAGE plpgsql;
