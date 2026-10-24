@@ -373,3 +373,75 @@ CREATE TRIGGER trg_auditar_diagnostico
 AFTER UPDATE ON Diagnostico
 FOR EACH ROW
 EXECUTE FUNCTION fn_auditoria_diagnostico();
+
+-- Procedimiento 1: Registrar atención clínica completa
+CREATE PROCEDURE prd_registrar_atencion(
+	p_idMascota int,
+	p_idVeterinario int,
+	p_idSede int,
+	p_idCita int,
+	p_motivo text,
+	p_peso numeric(5,2),
+	p_tratamiento text,
+	
+	p_diagNombre varchar(50),
+	p_diagDetalle text,
+	
+	p_medicamentos int[],
+	p_cantidades int[],
+	p_dosis smallint[],
+	p_duraciones smallint[]
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	v_idAtencion int;
+	v_idDiagnostico int;
+	v_idSede int;
+	v_totalStock int:=0;
+	v_idFicha int;
+	i int;
+BEGIN 
+	IF p_idCita IS NOT NULL THEN
+        SELECT idSede, idVeterinario 
+        INTO v_idSede, v_idVeterinario
+        FROM CitaMedica 
+        WHERE idCita = p_idCita;
+    ELSE
+        v_idSede := p_idSede;
+        v_idVeterinario := p_idVeterinario;
+    END IF;
+	
+	SELECT idFicha
+	INTO v_idFicha
+	FROM FichaClinica
+	WHERE idMascota = p_idMascota;
+	
+	INSERT INTO AtencionClinica(idFicha, idVeterinario, idCita, motivoConsulta, peso, tratamientoGeneral)
+	VALUES (v_idFicha, v_idVeterinario, v_idCita, p_motivo, p_peso, p_tratamiento)
+	RETURNING idAtencion INTO v_idAtencion;
+	
+	INSERT INTO Diagnostico(idAtencion, nombre, detalle)
+	VALUES (v_idAtencion, p_diagNombre, p_diagDetalle)
+	RETURNING idDiagnostico INTO v_idDiagnostico;
+	
+	IF p_medicamentos IS NOT NULL AND array_lenght(p_medicamentos, 1) > 0 THEN
+		FOR i IN .. array_lenght(p_medicamentos, 1) LOOP
+			INSERT INTO Receta (idDiagnostico, idMedicamento, cantidad, dosis, duracionMeses)
+        	VALUES (
+            	v_idDiagnostico, 
+            	p_medicamentos[i], 
+            	p_cantidades[i], 
+            	p_dosis[i], 
+            	p_duraciones[i]
+        	);
+
+        -- Actualizar inventario para ese medicamento específico
+        	UPDATE Inventario
+        	SET cantidad = cantidad - p_cantidades[i]
+        	WHERE sede = v_idSede 
+          	AND idMedicamento = p_medicamentos[i];
+		END LOOP;
+	END IF;
+END;
+$$;
