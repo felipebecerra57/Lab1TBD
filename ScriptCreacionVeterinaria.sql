@@ -448,7 +448,7 @@ END;
 $$;
 
 -- Procedimiento 2: Aplicar plan de vacunación y agendar futuras citas
-CREATE PROCEDURE prc_aplicar_plan_vacunacion(
+CREATE OR REPLACE PROCEDURE prc_aplicar_plan_vacunacion(
     p_id_mascota INT,
     p_id_vacuna INT,
     p_id_veterinario INT,
@@ -460,44 +460,44 @@ CREATE PROCEDURE prc_aplicar_plan_vacunacion(
 LANGUAGE plpgsql
 AS $$
 DECLARE
-v_total_dosis SMALLINT;
+    v_total_dosis SMALLINT;
     v_intervalo_dias INT;
     v_dosis SMALLINT;
     v_fecha_proxima DATE;
-    v_fecha_cita_refuerzo TIMESTAMP;
+    v_fechaCitaRefuerzo TIMESTAMP;
 BEGIN
     -- Obtener info de la vacuna: totalDosis e intervaloDias
     SELECT totalDosis, intervaloDias
-    INTO v_totalDosis, v_intervaloDias
+    INTO v_total_dosis, v_intervalo_dias
     FROM Vacuna
-    WHERE idVacuna = p_idVacuna;
+    WHERE idVacuna = p_id_vacuna;
 
-    IF v_totalDosis IS NULL THEN
-        RAISE EXCEPTION 'La vacuna con ID % no existe.', p_idVacuna;
+    IF v_total_dosis IS NULL THEN
+        RAISE EXCEPTION 'La vacuna con ID % no existe.', p_id_vacuna;
     END IF;
 
     -- Calcular próxima cita si requiere más de una dosis
-    IF v_totalDosis > 1 THEN
-        v_fechaProxima := (p_fechaInicio::date + (v_intervaloDias * INTERVAL '1 day'))::date;
+    IF v_total_dosis > 1 THEN
+        v_fecha_proxima := (p_fecha_inicio::date + (v_intervalo_dias * INTERVAL '1 day'))::date;
     ELSE
-        v_fechaProxima := NULL;
+        v_fecha_proxima := NULL;
     END IF;
 
     -- Registrar la primera dosis (numeroDosis = 1) en Vacunacion
     INSERT INTO Vacunacion (idMascota, idVacuna, numeroDosis, fechaAplicacion, fechaProximaDosis)
-    VALUES (p_idMascota, p_idVacuna, 1, p_fechaInicio::date, v_fechaProxima);
+    VALUES (p_id_mascota, p_id_vacuna, 1, p_fecha_inicio::date, v_fecha_proxima);
 
     -- Generar automáticamente las citas futuras para las dosis de refuerzo (2..totalDosis)
-    IF v_totalDosis > 1 THEN
-        FOR v_dosis IN 2 .. v_totalDosis LOOP
-            v_fechaCitaRefuerzo := p_fechaInicio + ((v_dosis - 1) * v_intervaloDias * INTERVAL '1 day');
+    IF v_total_dosis > 1 THEN
+        FOR v_dosis IN 2 .. v_total_dosis LOOP
+            v_fechaCitaRefuerzo := p_fecha_inicio + ((v_dosis - 1) * v_intervalo_dias * INTERVAL '1 day');
 
             INSERT INTO CitaMedica (
                 fecha, idVeterinario, idMascota, idSede,
                 estado, modalidad, direccionDomicilio, duracionMin
             ) VALUES (
-             v_fechaCitaRefuerzo, p_idVeterinario, p_idMascota, p_idSede,
-             'PROGRAMADA', p_modalidad, p_direccionDomicilio, 30
+             v_fechaCitaRefuerzo, p_id_veterinario, p_id_mascota, p_id_sede,
+             'PROGRAMADA', p_modalidad, p_direccion_domicilio, 30
             );
         END LOOP;
     END IF;
