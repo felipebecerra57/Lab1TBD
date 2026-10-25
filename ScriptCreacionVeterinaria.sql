@@ -447,6 +447,63 @@ BEGIN
 END;
 $$;
 
+-- Procedimiento 2: Aplicar plan de vacunación y agendar futuras citas
+CREATE PROCEDURE prc_aplicar_plan_vacunacion(
+    p_id_mascota INT,
+    p_id_vacuna INT,
+    p_id_veterinario INT,
+    p_id_sede INT,
+    p_fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    p_modalidad VARCHAR(25) DEFAULT 'SEDE',
+    p_direccion_domicilio VARCHAR(200) DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+v_total_dosis SMALLINT;
+    v_intervalo_dias INT;
+    v_dosis SMALLINT;
+    v_fecha_proxima DATE;
+    v_fecha_cita_refuerzo TIMESTAMP;
+BEGIN
+    -- Obtener info de la vacuna: totalDosis e intervaloDias
+    SELECT totalDosis, intervaloDias
+    INTO v_totalDosis, v_intervaloDias
+    FROM Vacuna
+    WHERE idVacuna = p_idVacuna;
+
+    IF v_totalDosis IS NULL THEN
+        RAISE EXCEPTION 'La vacuna con ID % no existe.', p_idVacuna;
+    END IF;
+
+    -- Calcular próxima cita si requiere más de una dosis
+    IF v_totalDosis > 1 THEN
+        v_fechaProxima := (p_fechaInicio::date + (v_intervaloDias * INTERVAL '1 day'))::date;
+    ELSE
+        v_fechaProxima := NULL;
+    END IF;
+
+    -- Registrar la primera dosis (numeroDosis = 1) en Vacunacion
+    INSERT INTO Vacunacion (idMascota, idVacuna, numeroDosis, fechaAplicacion, fechaProximaDosis)
+    VALUES (p_idMascota, p_idVacuna, 1, p_fechaInicio::date, v_fechaProxima);
+
+    -- Generar automáticamente las citas futuras para las dosis de refuerzo (2..totalDosis)
+    IF v_totalDosis > 1 THEN
+        FOR v_dosis IN 2 .. v_totalDosis LOOP
+            v_fechaCitaRefuerzo := p_fechaInicio + ((v_dosis - 1) * v_intervaloDias * INTERVAL '1 day');
+
+            INSERT INTO CitaMedica (
+                fecha, idVeterinario, idMascota, idSede,
+                estado, modalidad, direccionDomicilio, duracionMin
+            ) VALUES (
+             v_fechaCitaRefuerzo, p_idVeterinario, p_idMascota, p_idSede,
+             'PROGRAMADA', p_modalidad, p_direccionDomicilio, 30
+            );
+        END LOOP;
+    END IF;
+END;
+$$;
+
 -- Vista Materializada: Estadísticas de Atención por Especie y Sede
 DROP MATERIALIZED VIEW IF EXISTS mv_estadisticas_atencion;
 
