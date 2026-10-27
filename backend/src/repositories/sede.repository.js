@@ -25,16 +25,15 @@ async function crearSede({ nombre, calle, numero, comuna, telefono, idAdmin }) {
     return rows[0];
 }
 
-async function actualizarSede(req, res) {
-    try {
-        const sede = await repo.actualizar(req.params.id, req.body);
-        if (!sede) return res.status(404).json({ error: 'Sede no encontrada' });
-        res.json(sede);
-    } catch (e) {
-        console.error(e);
-        if (e.code === '23503') return res.status(400).json({ error: 'El administrador indicado no existe' });
-        res.status(500).json({ error: 'Error interno' });
-    }
+async function actualizarSede(id, { nombre, calle, numero, comuna, telefono, idAdmin }) {
+    const { rows } = await pool.query(
+        `UPDATE Sede
+         SET nombre = $1, calle = $2, numero = $3, comuna = $4, telefono = $5, idAdmin = $6
+         WHERE idSede = $7
+         RETURNING ${COLUMNAS}`,
+        [nombre, calle, numero, comuna, telefono, idAdmin ?? null, id]
+    );
+    return rows[0];
 }
 
 module.exports = { getSedes, getSede, crearSede, actualizarSede};
