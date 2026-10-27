@@ -373,3 +373,160 @@ CREATE TRIGGER trg_auditar_diagnostico
 AFTER UPDATE ON Diagnostico
 FOR EACH ROW
 EXECUTE FUNCTION fn_auditoria_diagnostico();
+
+
+-- Procedimiento 1: Registrar atención clínica completa
+CREATE PROCEDURE prd_registrar_atencion(
+	p_idMascota int,
+	p_idVeterinario int,
+	p_idSede int,
+	p_idCita int,
+	p_motivo text,
+	p_peso numeric(5,2),
+	p_tratamiento text,
+	
+	p_diagNombre varchar(50),
+	p_diagDetalle text,
+	
+	p_medicamentos int[],
+	p_cantidades int[],
+	p_dosis smallint[],
+	p_duraciones smallint[]
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	v_idAtencion int;
+	v_idDiagnostico int;
+	v_idSede int;
+	v_totalStock int:=0;
+	v_idFicha int;
+	i int;
+BEGIN 
+	IF p_idCita IS NOT NULL THEN
+        SELECT idSede, idVeterinario 
+        INTO v_idSede, v_idVeterinario
+        FROM CitaMedica 
+        WHERE idCita = p_idCita;
+    ELSE
+        v_idSede := p_idSede;
+        v_idVeterinario := p_idVeterinario;
+    END IF;
+	
+	SELECT idFicha
+	INTO v_idFicha
+	FROM FichaClinica
+	WHERE idMascota = p_idMascota;
+	
+	INSERT INTO AtencionClinica(idFicha, idVeterinario, idCita, motivoConsulta, peso, tratamientoGeneral)
+	VALUES (v_idFicha, v_idVeterinario, v_idCita, p_motivo, p_peso, p_tratamiento)
+	RETURNING idAtencion INTO v_idAtencion;
+	
+	INSERT INTO Diagnostico(idAtencion, nombre, detalle)
+	VALUES (v_idAtencion, p_diagNombre, p_diagDetalle)
+	RETURNING idDiagnostico INTO v_idDiagnostico;
+	
+	IF p_medicamentos IS NOT NULL AND array_lenght(p_medicamentos, 1) > 0 THEN
+		FOR i IN .. array_lenght(p_medicamentos, 1) LOOP
+			INSERT INTO Receta (idDiagnostico, idMedicamento, cantidad, dosis, duracionMeses)
+        	VALUES (
+            	v_idDiagnostico, 
+            	p_medicamentos[i], 
+            	p_cantidades[i], 
+            	p_dosis[i], 
+            	p_duraciones[i]
+        	);
+
+        -- Actualizar inventario para ese medicamento específico
+        	UPDATE Inventario
+        	SET cantidad = cantidad - p_cantidades[i]
+        	WHERE sede = v_idSede 
+          	AND idMedicamento = p_medicamentos[i];
+		END LOOP;
+	END IF;
+END;
+$$;
+
+-- Procedimiento 2: Aplicar plan de vacunación y agendar futuras citas
+CREATE OR REPLACE PROCEDURE prc_aplicar_plan_vacunacion(
+    p_id_mascota INT,
+    p_id_vacuna INT,
+    p_id_veterinario INT,
+    p_id_sede INT,
+    p_fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    p_modalidad VARCHAR(25) DEFAULT 'SEDE',
+    p_direccion_domicilio VARCHAR(200) DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_total_dosis SMALLINT;
+    v_intervalo_dias INT;
+    v_dosis SMALLINT;
+    v_fecha_proxima DATE;
+    v_fechaCitaRefuerzo TIMESTAMP;
+BEGIN
+    -- Obtener info de la vacuna: totalDosis e intervaloDias
+    SELECT totalDosis, intervaloDias
+    INTO v_total_dosis, v_intervalo_dias
+    FROM Vacuna
+    WHERE idVacuna = p_id_vacuna;
+
+    IF v_total_dosis IS NULL THEN
+        RAISE EXCEPTION 'La vacuna con ID % no existe.', p_id_vacuna;
+    END IF;
+
+    -- Calcular próxima cita si requiere más de una dosis
+    IF v_total_dosis > 1 THEN
+        v_fecha_proxima := (p_fecha_inicio::date + (v_intervalo_dias * INTERVAL '1 day'))::date;
+    ELSE
+        v_fecha_proxima := NULL;
+    END IF;
+
+    -- Registrar la primera dosis (numeroDosis = 1) en Vacunacion
+    INSERT INTO Vacunacion (idMascota, idVacuna, numeroDosis, fechaAplicacion, fechaProximaDosis)
+    VALUES (p_id_mascota, p_id_vacuna, 1, p_fecha_inicio::date, v_fecha_proxima);
+
+    -- Generar automáticamente las citas futuras para las dosis de refuerzo (2..totalDosis)
+    IF v_total_dosis > 1 THEN
+        FOR v_dosis IN 2 .. v_total_dosis LOOP
+            v_fechaCitaRefuerzo := p_fecha_inicio + ((v_dosis - 1) * v_intervalo_dias * INTERVAL '1 day');
+
+            INSERT INTO CitaMedica (
+                fecha, idVeterinario, idMascota, idSede,
+                estado, modalidad, direccionDomicilio, duracionMin
+            ) VALUES (
+             v_fechaCitaRefuerzo, p_id_veterinario, p_id_mascota, p_id_sede,
+             'PROGRAMADA', p_modalidad, p_direccion_domicilio, 30
+            );
+        END LOOP;
+    END IF;
+END;
+$$;
+
+-- Vista Materializada: Estadísticas de Atención por Especie y Sede
+DROP MATERIALIZED VIEW IF EXISTS mv_estadisticas_atencion;
+
+CREATE MATERIALIZED VIEW mv_estadisticas_atencion AS
+SELECT es.tipo   AS especie,
+       s.nombre  AS sede,
+       d.nombre  AS diagnostico,
+       COUNT(DISTINCT ac.idAtencion) AS cantidad_atenciones
+FROM AtencionClinica ac
+JOIN FichaClinica fc ON fc.idFicha = ac.idFicha
+JOIN Mascota m       ON m.idMascota = fc.idMascota
+JOIN Especie es      ON es.idEspecie = m.idEspecie
+JOIN Empleado e      ON e.idEmpleado = ac.idVeterinario
+JOIN Sede s          ON s.idSede = e.idSede
+JOIN Diagnostico d   ON d.idAtencion = ac.idAtencion
+WHERE ac.fecha >= current_date - INTERVAL '12 months'
+GROUP BY es.tipo, s.nombre, d.nombre;
+
+-- Función para refrescar la vista (el backend la llama una vez al día)
+CREATE OR REPLACE FUNCTION fn_refrescar_estadisticas()
+RETURNS void AS $$
+BEGIN
+    REFRESH MATERIALIZED VIEW mv_estadisticas_atencion;
+END;
+$$ LANGUAGE plpgsql;
+
