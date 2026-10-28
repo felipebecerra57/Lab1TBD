@@ -36,4 +36,10 @@ async function actualizarSede(id, { nombre, calle, numero, comuna, telefono, idA
     return rows[0];
 }
 
-module.exports = { getSedes, getSede, crearSede, actualizarSede};
+// Eliminar sede por ID
+async function eliminarSede(id) {
+    const { rowCount } = await pool.query('DELETE FROM Sede WHERE idSede = $1', [id]);
+    return rowCount > 0; // Retorna true si se eliminó, false si no existía
+}
+
+module.exports = { getSedes, getSede, crearSede, actualizarSede, eliminarSede};

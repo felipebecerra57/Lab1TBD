@@ -9,5 +9,6 @@ router.get('/:id', verificarToken, controller.getSedeById);
 // Crear y editar requiere ser específicamente Administrador
 router.post('/', verificarToken, verificarRol(['ADMIN']), controller.crearSede);
 router.put('/:id', verificarToken, verificarRol(['ADMIN']), controller.actualizarSede);
+router.delete('/:id', verificarToken, verificarRol(['ADMIN']), controller.eliminarSede);
 
 module.exports = router;

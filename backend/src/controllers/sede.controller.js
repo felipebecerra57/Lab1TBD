@@ -41,4 +41,21 @@ async function actualizarSede(req, res) {
         res.status(500).json({ error: 'Error interno' });
     }
 }
-module.exports = { getSedes, getSedeById, crearSede, actualizarSede};
+
+async function eliminarSede(req, res) {
+    try {
+        const eliminado = await repo.eliminarSede(req.params.id);
+        if (!eliminado) {
+            return res.status(404).json({ error: 'Sede no encontrada' });
+        }
+        res.json({ mensaje: 'Sede eliminada exitosamente' });
+    } catch (e) {
+        console.error(e);
+        // Error de llave foránea (intentar borrar una sede con inventario o empleados adentro)
+        if (e.code === '23503') {
+            return res.status(400).json({ error: 'No se puede eliminar: la sede tiene registros asociados' });
+        }
+        res.status(500).json({ error: 'Error interno' });
+    }
+}
+module.exports = { getSedes, getSedeById, crearSede, actualizarSede, eliminarSede};
