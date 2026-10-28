@@ -2,15 +2,20 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const pool = require('./config/db');
+
+// Rutas
 const authRoutes = require('./routes/authRoutes');
+const sedeRoutes = require('./routes/sede.routes');
 
 const app = express();
 
 // Middlewares globales
 app.use(cors());
-app.use(express.json()); // Permite al backend leer JSON en los requests
-app.use('/api/auth', authRoutes);
+app.use(express.json());
 
+// Montaje de rutas
+app.use('/api/auth', authRoutes);
+app.use('/api/sedes', sedeRoutes);
 
 // Endpoint de prueba de conexión
 app.get('/api/ping', async (req, res) => {
@@ -24,7 +29,6 @@ app.get('/api/ping', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.use('/api/sedes', require('./routes/sede.routes'));
 
 app.listen(PORT, () => {
     console.log(`Servidor de Veterinaria corriendo en http://localhost:${PORT}`);
