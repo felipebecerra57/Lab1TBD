@@ -6,34 +6,40 @@ require('dotenv').config();
 // Registro básico para un Tutor
 const registerTutor = async (req, res) => {
     const { email, password, rut, telefono, nombre, apellido } = req.body;
+    
+    // 1. Obtener un cliente exclusivo del pool para la transacción
+    const client = await pool.connect();
+    
     try {
-        // 1. Encriptar contraseña
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        // 2. Iniciar transacción manual
-        await pool.query('BEGIN');
+        // 2. Iniciar la transacción sobre este cliente específico
+        await client.query('BEGIN');
 
-        // 3. Insertar en tabla padre (Usuario)
-        const userResult = await pool.query(
+        const userResult = await client.query(
             'INSERT INTO Usuario (email, passwordHash) VALUES ($1, $2) RETURNING idUsuario',
             [email, passwordHash]
         );
         const idUsuario = userResult.rows[0].idusuario;
 
-        // 4. Insertar en tabla hija (Tutor)
-        await pool.query(
+        await client.query(
             'INSERT INTO Tutor (idTutor, rut, telefono) VALUES ($1, $2, $3)',
             [idUsuario, rut, telefono]
         );
 
-        await pool.query('COMMIT');
+        // 3. Confirmar los cambios
+        await client.query('COMMIT');
         res.status(201).json({ mensaje: 'Tutor registrado exitosamente', idUsuario });
 
     } catch (error) {
-        await pool.query('ROLLBACK');
-        console.error(error);
+        // Si algo falla, revertir usando el mismo cliente
+        await client.query('ROLLBACK');
+        console.error('Error en la transacción de registro:', error);
         res.status(500).json({ error: 'Error al registrar usuario' });
+    } finally {
+        // 4. CRÍTICO: Devolver el cliente al pool para que no se agoten las conexiones
+        client.release();
     }
 };
 
