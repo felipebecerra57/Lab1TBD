@@ -376,7 +376,7 @@ EXECUTE FUNCTION fn_auditoria_diagnostico();
 
 
 -- Procedimiento 1: Registrar atención clínica completa
-CREATE PROCEDURE prd_registrar_atencion(
+CREATE or replace PROCEDURE prd_registrar_atencion(
 	p_idMascota int,
 	p_idVeterinario int,
 	p_idSede int,
@@ -396,10 +396,11 @@ CREATE PROCEDURE prd_registrar_atencion(
 LANGUAGE plpgsql
 AS $$
 DECLARE
+	v_idVeterinario int;
 	v_idAtencion int;
 	v_idDiagnostico int;
 	v_idSede int;
-	v_totalStock int:=0;
+	v_stockActual int;
 	v_idFicha int;
 	i int;
 BEGIN 
@@ -419,15 +420,34 @@ BEGIN
 	WHERE idMascota = p_idMascota;
 	
 	INSERT INTO AtencionClinica(idFicha, idVeterinario, idCita, motivoConsulta, peso, tratamientoGeneral)
-	VALUES (v_idFicha, v_idVeterinario, v_idCita, p_motivo, p_peso, p_tratamiento)
+	VALUES (v_idFicha, v_idVeterinario, p_idCita, p_motivo, p_peso, p_tratamiento)
 	RETURNING idAtencion INTO v_idAtencion;
 	
 	INSERT INTO Diagnostico(idAtencion, nombre, detalle)
 	VALUES (v_idAtencion, p_diagNombre, p_diagDetalle)
 	RETURNING idDiagnostico INTO v_idDiagnostico;
 	
-	IF p_medicamentos IS NOT NULL AND array_lenght(p_medicamentos, 1) > 0 THEN
-		FOR i IN .. array_lenght(p_medicamentos, 1) LOOP
+	IF p_medicamentos IS NOT NULL AND array_length(p_medicamentos, 1) > 0 THEN
+		FOR i IN 1 .. array_length(p_medicamentos, 1) LOOP
+		
+			-- Consultar el stock actual en la sede
+            SELECT cantidad INTO v_stockActual
+            FROM Inventario
+            WHERE sede = v_idSede 
+              AND idMedicamento = p_medicamentos[i];
+
+            -- Validar si el medicamento no existe en el inventario de la sede
+            IF v_stockActual IS NULL THEN
+                RAISE EXCEPTION 'El medicamento con ID % no está registrado en el inventario de la sede %.', 
+                    p_medicamentos[i], v_idSede;
+            END IF;
+
+            -- Validar si no alcanza la cantidad solicitada
+            IF v_stockActual < p_cantidades[i] THEN
+                RAISE EXCEPTION 'Stock insuficiente para el medicamento ID % en la sede %. Disponible: %, Solicitado: %.', 
+                    p_medicamentos[i], v_idSede, v_stockActual, p_cantidades[i];
+            END IF;
+            
 			INSERT INTO Receta (idDiagnostico, idMedicamento, cantidad, dosis, duracionMeses)
         	VALUES (
             	v_idDiagnostico, 
@@ -444,6 +464,12 @@ BEGIN
           	AND idMedicamento = p_medicamentos[i];
 		END LOOP;
 	END IF;
+	
+	IF p_idCita IS NOT NULL THEN
+        UPDATE CitaMedica
+        SET estado = 'REALIZADA'
+        WHERE idCita = p_idCita;
+    END IF;
 END;
 $$;
 
@@ -529,4 +555,3 @@ BEGIN
     REFRESH MATERIALIZED VIEW mv_estadisticas_atencion;
 END;
 $$ LANGUAGE plpgsql;
-
