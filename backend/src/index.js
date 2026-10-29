@@ -16,6 +16,7 @@ app.use(express.json());
 // Montaje de rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/sedes', sedeRoutes);
+app.use('/api/usuarios', require('./routes/usuario.routes'));
 
 // Endpoint de prueba de conexión
 app.get('/api/ping', async (req, res) => {
