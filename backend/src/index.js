@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const pool = require('./config/db');
+require('./jobs/refrescarEstadisticas');
 
 // Rutas
 const authRoutes = require('./routes/authRoutes');
