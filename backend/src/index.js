@@ -25,6 +25,8 @@ app.get('/api/ping', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.use('/api/sedes', require('./routes/sede.routes'));
+app.use('/api/mascotas', require('./routes/mascotaRoutes'));
+app.use('/api/fichas', require('./routes/fichaClinicaRoutes'));
 
 app.listen(PORT, () => {
     console.log(`Servidor de Veterinaria corriendo en http://localhost:${PORT}`);
