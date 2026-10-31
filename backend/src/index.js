@@ -17,6 +17,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/sedes', sedeRoutes);
 app.use('/api/diagnosticos', require('./routes/diagnostico.routes'));
+app.use('/api/recetas', require('./routes/receta.routes'));
 
 // Endpoint de prueba de conexión
 app.get('/api/ping', async (req, res) => {
