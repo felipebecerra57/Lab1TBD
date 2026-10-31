@@ -25,6 +25,17 @@ async function getCitasPorMascota(idMascota){
     return rows;
 }
 
+async function getCitaPorId(idCita){
+    const {rows} = await pool.query(
+        `select ${columnas} 
+        from CitaMedica
+        where idCita = $1`,
+        [idCita]
+    );
+    return rows;
+}
+
+
 async function crearCita(fecha, idVeterinario, idMascota, idSede, estado, modalidad, direccionDomicilio, duracionMin) {
     const { rows } = await pool.query(
     `insert into CitaMedica (fecha, idVeterinario, idMascota, idSede, estado, modalidad, direccionDomicilio, duracionMin)
@@ -34,4 +45,38 @@ async function crearCita(fecha, idVeterinario, idMascota, idSede, estado, modali
     );
     return rows[0]?.idCita;
 }
-module.exports = {getCitas, getCitasPorMascota, crearCita};
+
+async function actualizarCita(idCita, fecha, idVeterinario, idMascota, idSede, estado, modalidad, direccionDomicilio, duracionMin) {
+    const { rowCount } = await pool.query(
+    `update CitaMedica
+         set fecha = coalesce($1, fecha),
+             idVeterinario = coalesce($2, idVeterinario),
+             idMascota = coalesce($3, idMascota),
+             idSede = coalesce($4, idSede),
+             estado = coalesce($5, estado),
+             modalidad = coalesce($6, modalidad),
+             direccionDomicilio = coalesce($7, direccionDomicilio),
+             duracionMin = coalesce($8, duracionMin)
+         where idCita = $9`,
+    [
+        fecha ?? null,
+    idVeterinario ?? null,
+    idMascota ?? null,
+    idSede ?? null,
+    estado ?? null,
+    modalidad ?? null,
+    direccionDomicilio ?? null,
+    duracionMin ?? null,
+    idCita
+]
+);
+    return rowCount > 0;
+}
+async function eliminarCita(idCita){
+    const {rowCount} = await pool.query(
+        `delete from CitaMedica where idCita = $1`,
+        [idCita]
+    );
+    return rowCount >0;
+}
+module.exports = {getCitas, getCitasPorMascota, getCitaPorId, crearCita, actualizarCita, eliminarCita};
