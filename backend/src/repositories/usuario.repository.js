@@ -52,6 +52,37 @@ async function obtenerPersonal() {
     return rows;
 }
 
+async function obtenerPersonalPorId(id) {
+    const { rows } = await pool.query(`
+        SELECT u.idUsuario, u.email, e.nombreEmp, e.apellidoEmp, e.rut, e.telefono 
+        FROM Usuario u 
+        JOIN Empleado e ON u.idUsuario = e.idEmpleado
+        WHERE u.idUsuario = $1
+    `, [id]);
+    return rows[0];
+}
+
+async function obtenerVeterinarios() {
+    const { rows } = await pool.query(`
+        SELECT u.idUsuario, u.email, e.nombreEmp, e.apellidoEmp, e.rut, e.telefono, v.especialidad 
+        FROM Usuario u 
+        JOIN Empleado e ON u.idUsuario = e.idEmpleado
+        JOIN Veterinario v ON e.idEmpleado = v.idVeterinario
+    `);
+    return rows;
+}
+
+async function obtenerVeterinarioPorId(id) {
+    const { rows } = await pool.query(`
+        SELECT u.idUsuario, u.email, e.nombreEmp, e.apellidoEmp, e.rut, e.telefono, v.especialidad 
+        FROM Usuario u 
+        JOIN Empleado e ON u.idUsuario = e.idEmpleado
+        JOIN Veterinario v ON e.idEmpleado = v.idVeterinario
+        WHERE u.idUsuario = $1
+    `, [id]);
+    return rows[0];
+}
+
 // PUT: Actualizar datos específicos
 async function actualizarTutor(id, rut, telefono) {
     const { rowCount } = await pool.query(
@@ -82,6 +113,9 @@ module.exports = {
     insertarAdministrador,
     obtenerTutores,
     obtenerPersonal,
+    obtenerPersonalPorId,
+    obtenerVeterinarios,
+    obtenerVeterinarioPorId,
     actualizarTutor,
     actualizarEmpleado,
     eliminarUsuario

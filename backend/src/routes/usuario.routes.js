@@ -7,8 +7,11 @@ router.post('/veterinario', verificarToken, verificarRol(['ADMIN']), controller.
 router.post('/administrador', verificarToken, verificarRol(['ADMIN']), controller.registrarAdministrador);
 
 // Rutas GET
-router.get('/tutores', verificarToken, verificarRol(['ADMIN']), controller.getTutores);
+router.get('/tutores', verificarToken, verificarRol(['ADMIN', 'VET']), controller.getTutores);
 router.get('/personal', verificarToken, verificarRol(['ADMIN']), controller.getPersonal);
+router.get('/veterinarios', verificarToken, verificarRol(['ADMIN', 'VET']), controller.getVeterinarios);
+router.get('/veterinarios/:id', verificarToken, verificarRol(['ADMIN', 'VET']), controller.getVeterinarioById);
+router.get('/personal/:id', verificarToken, verificarRol(['ADMIN']), controller.getPersonalById);
 
 // Rutas PUT
 router.put('/tutor/:id', verificarToken, verificarRol(['ADMIN']), controller.updateTutor);
