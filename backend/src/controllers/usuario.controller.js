@@ -73,6 +73,35 @@ async function getPersonal(req, res) {
     }
 }
 
+async function getPersonalById(req, res) {
+    try {
+        const empleado = await repo.obtenerPersonalPorId(req.params.id);
+        if (!empleado) return res.status(404).json({ error: 'Empleado no encontrado' });
+        res.json(empleado);
+    } catch (e) {
+        res.status(500).json({ error: 'Error al buscar el empleado' });
+    }
+}
+
+async function getVeterinarios(req, res) {
+    try {
+        const vets = await repo.obtenerVeterinarios();
+        res.json(vets);
+    } catch (e) {
+        res.status(500).json({ error: 'Error al obtener veterinarios' });
+    }
+}
+
+async function getVeterinarioById(req, res) {
+    try {
+        const vet = await repo.obtenerVeterinarioPorId(req.params.id);
+        if (!vet) return res.status(404).json({ error: 'Veterinario no encontrado' });
+        res.json(vet);
+    } catch (e) {
+        res.status(500).json({ error: 'Error al buscar el veterinario' });
+    }
+}
+
 async function updateTutor(req, res) {
     const { rut, telefono } = req.body;
     try {
@@ -105,4 +134,4 @@ async function deleteUsuario(req, res) {
     }
 }
 
-module.exports = { registrarVeterinario, registrarAdministrador, getTutores, getPersonal, updateTutor, updateEmpleado, deleteUsuario };
+module.exports = { registrarVeterinario, registrarAdministrador, getTutores, getPersonal, getPersonalById, getVeterinarios, getVeterinarioById, updateTutor, updateEmpleado, deleteUsuario };
