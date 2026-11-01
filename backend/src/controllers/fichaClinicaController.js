@@ -25,7 +25,7 @@ async function getFicha(req, res){
     try{
         const ficha = await repo.getFichaPorMascota(req.params.idMascota, filtroTutor(req));
         if(!ficha) return res.status(404).json({ error: 'Ficha no encontrada'});
-        res.status(ficha);
+        res.json(ficha);
     }catch (e){
         console.error(e);
         res.status(500).json({ error: 'Error interno'});
@@ -69,7 +69,7 @@ async function eliminar(req, res) {
 }
 
 
-module.exports = (getFicha, getFichas, crear, actualizar, eliminar, obtener);
+module.exports = {getFicha, getFichas, crear, actualizar, eliminar, obtener};
 
 
 

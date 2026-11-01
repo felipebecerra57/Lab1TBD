@@ -8,3 +8,5 @@ router.get('/', c.obtenerTodas);        // cualquier usuario autenticado (el tut
 router.get('/:id', c.obtener);
 router.post('/', verificarRol(['ADMIN']), c.crear);
 router.delete('/:id', verificarRol(['ADMIN']), c.eliminar);
+
+module.exports = router;

@@ -42,4 +42,4 @@ async function eliminar(req,res){
     }
 }
 
-module.exports = (obtenerTodas, obtener, crear, eliminar);
+module.exports = {obtenerTodas, obtener, crear, eliminar};

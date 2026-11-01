@@ -5,13 +5,13 @@ const columnas = `m.idMascota AS "idMascota", m.nombre, m.idTutor AS "idTutor",
 
 async function getMascotasPorTutor(idTutor){
     const {rows} = await pool.query(
-        `select ${columans} 
-        from Mascota m join Especie e on e.idEspecie m.idEspecie
+        `select ${columnas} 
+        from Mascota m join Especie e on e.idEspecie = m.idEspecie
         where ($1::int is null or m.idTutor = $1)
         order by m.idMascota`,
         [idTutor]
     );
-    return rows;
+    return rows[0];
 }
 async function getMascota(idMascota, idTutor){
     const {rows} = await pool.query(
@@ -27,7 +27,7 @@ async function crearMascota({nombre, idTutor, idEspecie, anioNacimiento, peso}){
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-        const {rows} = await pool.query(
+        const {rows} = await client.query(
             `insert into Mascota(nombre, idTutor, idEspecie, anioNacimiento, peso)
             values ($1,$2,$3,$4,$5)
             returning idMascota as "idMascota"`,

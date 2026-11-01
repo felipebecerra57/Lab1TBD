@@ -45,8 +45,8 @@ async function crear(req, res) {
 async function eliminar(req, res){
     try{
         if(!idValido(req.params.id)) return res.status(400).json( error = 'ID no válido');
-        const vacuna = await repo.getVacuna(req.params.id);
-        if(!vacuna) return res.status(400).json(error = 'Vacuna no encontrada');
+        const vacuna = await repo.eliminar(req.params.id);
+        if(!vacuna) return res.status(400).json({ error : 'Vacuna no encontrada'});
         res.status(204).send();
     } catch (e) {
         console.error(e);

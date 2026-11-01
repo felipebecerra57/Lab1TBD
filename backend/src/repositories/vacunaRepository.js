@@ -25,4 +25,4 @@ async function eliminar(id) {
     return rowCount > 0;
 }
 
-module.exports = (getVacuna, getVacunas, crear, eliminar);
+module.exports = {getVacuna, getVacunas, crear, eliminar};

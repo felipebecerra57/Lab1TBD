@@ -19,7 +19,7 @@ async function getAlergias(idTutor){
 
 async function getPorMascota(idMascota) {
     const { rows } = await pool.query(
-        `SELECT ${COLUMNAS} ${DESDE}
+        `SELECT ${columnas} ${desde}
      WHERE ma.idMascota = $1
      ORDER BY pa.nombre`,
         [idMascota]
@@ -29,7 +29,7 @@ async function getPorMascota(idMascota) {
 
 async function obtener(idMascota, idPrincipio) {
     const { rows } = await pool.query(
-        `SELECT ${COLUMNAS} ${DESDE}
+        `SELECT ${columnas} ${desde}
      WHERE ma.idMascota = $1 AND ma.idPrincipioActivo = $2`,
         [idMascota, idPrincipio]
     );

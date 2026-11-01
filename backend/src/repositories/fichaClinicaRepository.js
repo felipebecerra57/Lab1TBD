@@ -21,12 +21,12 @@ async function getFichaPorMascota(idMascota, idTutor){
         where f.idMascota = $1 and (m.idTutor = $2 or $2::int is null)`,
         [idMascota, idTutor]
     );
-    return rows;
+    return rows[0];
 }
 
 async function getPorId(idFicha, idTutor) {
     const { rows } = await pool.query(
-        `SELECT ${COLUMNAS}
+        `SELECT ${columnas}
      FROM FichaClinica f JOIN Mascota m ON m.idMascota = f.idMascota
      WHERE f.idFicha = $1 AND ($2::int IS NULL OR m.idTutor = $2)`,
         [idFicha, idTutor]
@@ -39,6 +39,7 @@ async function crearFichaClinica({ idMascota, esterilizado, observacionesGeneral
         `insert into FichaClinica (idMascota, esterilizado, observacionesGenerales)
         values ($1, coalesce($2,false), $3)
         returning idFicha as "idFicha"`,
+        [idMascota, esterilizado, observacionesGenerales ?? null]
     );
     return rows[0].idFicha;
 }
@@ -46,7 +47,7 @@ async function crearFichaClinica({ idMascota, esterilizado, observacionesGeneral
 async function actualizarFichaClinica(idFicha, {esterilizado, observacionesGenerales}){
     const {rowCount} = await pool.query(
         `update FichaClinica
-        set estirilizado = coalesce($1, estirilizado), observacionesGenerales = $2
+        set esterilizado = coalesce($1, esterilizado), observacionesGenerales = $2
         where idFicha = $3`,
         [esterilizado, observacionesGenerales ?? null, idFicha]
     );
@@ -55,11 +56,11 @@ async function actualizarFichaClinica(idFicha, {esterilizado, observacionesGener
 
 async function eliminarFichaClinica(idFicha){
     const {rowCount} = await pool.query(
-        `delete from FichaClinica where idFicha $1`, [idFicha]);
+        `delete from FichaClinica where idFicha = $1`, [idFicha]);
         return rowCount >0;
 }
 
-module.exports = (getFichaPorMascota, getFichasPorTutor, getPorId, crearFichaClinica, actualizarFichaClinica, eliminarFichaClinica)
+module.exports = {getFichaPorMascota, getFichasPorTutor, getPorId, crearFichaClinica, actualizarFichaClinica, eliminarFichaClinica}
 
 
 

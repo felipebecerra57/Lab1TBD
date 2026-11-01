@@ -6,7 +6,7 @@ router.use(verificarToken);
 
 router.get('/', c.getFichas);
 router.get('/mascota/:idMascota', c.getFicha);
-router.get('/:id', c.getFicha);
+router.get('/:id', c.obtener);
 router.post('/', verificarRol(['VET', 'ADMIN']), c.crear);
 router.put('/:id', verificarRol(['VET', 'ADMIN']), c.actualizar);
 router.delete('/:id', verificarRol(['ADMIN']), c.eliminar);
