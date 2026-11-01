@@ -6,6 +6,7 @@ const pool = require('./config/db');
 // Rutas
 const authRoutes = require('./routes/authRoutes');
 const sedeRoutes = require('./routes/sede.routes');
+const reporteRoutes = require('./routes/reporteRoutes');
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 // Montaje de rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/sedes', sedeRoutes);
+app.use('/api/reportes', reporteRoutes);
 app.use('/api/usuarios', require('./routes/usuario.routes'));
 app.use('/api/diagnosticos', require('./routes/diagnostico.routes'));
 app.use('/api/recetas', require('./routes/receta.routes'));
