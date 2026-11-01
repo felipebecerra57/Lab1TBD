@@ -17,6 +17,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/sedes', sedeRoutes);
 app.use('/api/diagnosticos', require('./routes/diagnostico.routes'));
+app.use('/api/recetas', require('./routes/receta.routes'));
 app.use('/api/atenciones', require('./routes/atencion.routes'));
 app.use('/api/mascotas', require('./routes/mascotaRoutes'));
 app.use('/api/fichas', require('./routes/fichaClinicaRoutes'));
@@ -24,6 +25,7 @@ app.use('/api/especies', require('./routes/especieRoutes'));
 app.use('/api/vacunas', require('./routes/vacunaRoutes'));
 app.use('/api/principios-activos', require('./routes/principioActRoutes'));
 app.use('/api/alergias', require('./routes/alergiaRoutes'));
+
 
 // Endpoint de prueba de conexión
 app.get('/api/ping', async (req, res) => {
