@@ -3,7 +3,7 @@ const filtroTutor = require ('../util/filtroTutor');
 
 async function getMascotasPorTutor(req, res){
     try {
-        res.jon(await repo.getMascotasPorTutor(filtroTutor(req)));
+        res.json(await repo.getMascotasPorTutor(filtroTutor(req)));
     } catch(e){
         console.error(e);
         res.status(500).json({ error: 'upsi dupsi'});
@@ -11,7 +11,7 @@ async function getMascotasPorTutor(req, res){
 }
 async function getMascota(req, res){
     try{
-        const mascota = await repo.getMascota(req.param.id, filtroTutor(req));
+        const mascota = await repo.getMascota(req.params.id, filtroTutor(req));
         if(!mascota) return res.status(404).json({ error: 'Mascota no encontrada!'});
         res.json(mascota);
     } catch(e){
@@ -28,7 +28,7 @@ async function crear(req, res){
         const idTutor = req.usuario.rol === 'TUTOR' ? req.usuario.idUsuario : req.body.idTutor;
         if (!idTutor) return res.status(400).json({error: 'idTutor es sumamente obligatorio!'})
 
-        const id = await repo.crear({nombre, idTutor, idEspecie, anioNacimiento, peso});
+        const id = await repo.crearMascota({nombre, idTutor, idEspecie, anioNacimiento, peso});
         res.status(201).json(await repo.getMascota(id, null));
     } catch(e){
         console.error(e);
@@ -41,9 +41,9 @@ async function actualizar(req, res){
         const { nombre, idEspecie} = req.body;
         if (!nombre || !idEspecie) return res.status(400).json({error: 'Nombre e idEspecie son OBLIGATORIOS!'})
 
-        const ok = await repo.actualizarMascota(req.param.id, req.body, filtroTutor(req));
+        const ok = await repo.actualizarMascota(req.params.id, req.body, filtroTutor(req));
         if(!ok) return res.status(400).json({ error: 'Mascota no encontrada!'});
-        res.json(await repo.getMascota(req.param.id, null));
+        res.json(await repo.getMascota(req.params.id, null));
     } catch (e){
         console.error(e);
         if(e.code === '23503') return res.status(400).json({ error: 'El Tutor o la especie no existe'});
@@ -52,7 +52,7 @@ async function actualizar(req, res){
 }
 async function eliminar(req, res) {
     try {
-        const ok = await repo.eliminar(req.params.id);
+        const ok = await repo.eliminarMascota(req.params.id);
         if (!ok) return res.status(404).json({ error: 'Mascota no encontrada' });
         res.status(204).send();
     } catch (e) {
@@ -62,4 +62,4 @@ async function eliminar(req, res) {
     }
 }
 
-module.exports = (getMascota, getMascotasPorTutor, crear, actualizar, eliminar);
+module.exports = {getMascota, getMascotasPorTutor, crear, actualizar, eliminar};
