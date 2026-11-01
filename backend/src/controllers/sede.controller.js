@@ -30,14 +30,32 @@ async function crearSede(req, res) {
     }
 }
 
-async function actualizarSede(id, { nombre, calle, numero, comuna, telefono, idAdmin }) {
-    const { rows } = await pool.query(
-        `UPDATE Sede
-     SET nombre = $1, calle = $2, numero = $3, comuna = $4, telefono = $5, idAdmin = $6
-     WHERE idSede = $7
-     RETURNING ${COLUMNAS}`,
-        [nombre, calle, numero, comuna, telefono, idAdmin ?? null, id]
-    );
-    return rows[0];
+async function actualizarSede(req, res) {
+    try {
+        const sede = await repo.actualizarSede(req.params.id, req.body);
+        if (!sede) return res.status(404).json({ error: 'Sede no encontrada' });
+        res.json(sede);
+    } catch (e) {
+        console.error(e);
+        if (e.code === '23503') return res.status(400).json({ error: 'El administrador indicado no existe' });
+        res.status(500).json({ error: 'Error interno' });
+    }
 }
-module.exports = { getSedes, getSedeById, crearSede, actualizarSede};
+
+async function eliminarSede(req, res) {
+    try {
+        const eliminado = await repo.eliminarSede(req.params.id);
+        if (!eliminado) {
+            return res.status(404).json({ error: 'Sede no encontrada' });
+        }
+        res.json({ mensaje: 'Sede eliminada exitosamente' });
+    } catch (e) {
+        console.error(e);
+        // Error de llave foránea (intentar borrar una sede con inventario o empleados adentro)
+        if (e.code === '23503') {
+            return res.status(400).json({ error: 'No se puede eliminar: la sede tiene registros asociados' });
+        }
+        res.status(500).json({ error: 'Error interno' });
+    }
+}
+module.exports = { getSedes, getSedeById, crearSede, actualizarSede, eliminarSede};

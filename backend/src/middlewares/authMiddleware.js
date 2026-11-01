@@ -29,4 +29,4 @@ const verificarRol = (rolesPermitidos) => {
     };
 };
 
-module.exports = { verificarToken, verificarRol };
+module.exports = { verificarToken, verificarRol };6
