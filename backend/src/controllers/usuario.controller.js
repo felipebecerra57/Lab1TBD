@@ -55,4 +55,54 @@ async function registrarAdministrador(req, res) {
     }
 }
 
-module.exports = { registrarVeterinario, registrarAdministrador };
+async function getTutores(req, res) {
+    try {
+        const tutores = await repo.obtenerTutores();
+        res.json(tutores);
+    } catch (e) {
+        res.status(500).json({ error: 'Error al obtener tutores' });
+    }
+}
+
+async function getPersonal(req, res) {
+    try {
+        const personal = await repo.obtenerPersonal();
+        res.json(personal);
+    } catch (e) {
+        res.status(500).json({ error: 'Error al obtener personal' });
+    }
+}
+
+async function updateTutor(req, res) {
+    const { rut, telefono } = req.body;
+    try {
+        const actualizado = await repo.actualizarTutor(req.params.id, rut, telefono);
+        if (!actualizado) return res.status(404).json({ error: 'Tutor no encontrado' });
+        res.json({ mensaje: 'Tutor actualizado exitosamente' });
+    } catch (e) {
+        res.status(500).json({ error: 'Error al actualizar tutor' });
+    }
+}
+
+async function updateEmpleado(req, res) {
+    const { nombreEmp, apellidoEmp, rut, telefono } = req.body;
+    try {
+        const actualizado = await repo.actualizarEmpleado(req.params.id, nombreEmp, apellidoEmp, rut, telefono);
+        if (!actualizado) return res.status(404).json({ error: 'Empleado no encontrado' });
+        res.json({ mensaje: 'Empleado actualizado exitosamente' });
+    } catch (e) {
+        res.status(500).json({ error: 'Error al actualizar empleado' });
+    }
+}
+
+async function deleteUsuario(req, res) {
+    try {
+        const eliminado = await repo.eliminarUsuario(req.params.id);
+        if (!eliminado) return res.status(404).json({ error: 'Usuario no encontrado' });
+        res.json({ mensaje: 'Usuario eliminado exitosamente' });
+    } catch (e) {
+        res.status(500).json({ error: 'Error al eliminar usuario' });
+    }
+}
+
+module.exports = { registrarVeterinario, registrarAdministrador, getTutores, getPersonal, updateTutor, updateEmpleado, deleteUsuario };
