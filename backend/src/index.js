@@ -29,6 +29,8 @@ app.use('/api/mascotas', require('./routes/mascotaRoutes'));
 app.use('/api/fichas', require('./routes/fichaClinicaRoutes'));
 app.use('/api/especies', require('./routes/especieRoutes'));
 app.use('/api/vacunas', require('./routes/vacunaRoutes'));
+app.use('/api/principios-activos', require('./routes/principioActRoutes'));
+app.use('/api/alergias', require('./routes/alergiaRoutes'));
 
 app.listen(PORT, () => {
     console.log(`Servidor de Veterinaria corriendo en http://localhost:${PORT}`);
