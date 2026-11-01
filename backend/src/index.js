@@ -18,6 +18,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/sedes', sedeRoutes);
 app.use('/api/diagnosticos', require('./routes/diagnostico.routes'));
 app.use('/api/recetas', require('./routes/receta.routes'));
+app.use('/api/atenciones', require('./routes/atencion.routes'));
 app.use('/api/mascotas', require('./routes/mascotaRoutes'));
 app.use('/api/fichas', require('./routes/fichaClinicaRoutes'));
 app.use('/api/especies', require('./routes/especieRoutes'));
