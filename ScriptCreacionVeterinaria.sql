@@ -555,3 +555,20 @@ BEGIN
     REFRESH MATERIALIZED VIEW mv_estadisticas_atencion;
 END;
 $$ LANGUAGE plpgsql;
+
+
+-- 1. Índice de búsqueda de citas por mascota
+CREATE INDEX IF NOT EXISTS idx_citamedica_idmascota 
+    ON CitaMedica(idMascota);
+
+-- 2. Índice de búsqueda de cita por fecha
+CREATE INDEX IF NOT EXISTS idx_citamedica_fecha 
+    ON CitaMedica(fecha);
+
+-- 3. Índice de búsqueda de vacunas vencidas / próximas a vencer
+CREATE INDEX IF NOT EXISTS idx_vacunacion_fechaproximadosis 
+    ON Vacunacion(fechaProximaDosis);
+
+-- 4. Soporte para el cálculo de bloques horarios libres
+CREATE INDEX IF NOT EXISTS idx_citamedica_vet_fecha_estado 
+    ON CitaMedica(idVeterinario, fecha, estado);
