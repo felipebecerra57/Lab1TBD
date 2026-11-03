@@ -7,6 +7,10 @@ const pool = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const sedeRoutes = require('./routes/sede.routes');
 const citaRoutes = require('./routes/citaMedica.routes');
+const turnoRoutes = require('./routes/turno.routes');
+const medicamentoRoutes = require('./routes/medicamento.routes');
+
+
 
 const app = express();
 
@@ -18,6 +22,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/sedes', sedeRoutes);
 app.use('/api/citas', citaRoutes);
+app.use('/api/turnos', turnoRoutes);
+app.use('/api/medicamentos', medicamentoRoutes);
 app.use('/api/diagnosticos', require('./routes/diagnostico.routes'));
 
 // Endpoint de prueba de conexión
