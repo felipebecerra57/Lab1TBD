@@ -3,7 +3,7 @@ const citaMedicaRepository = require('../repositories/citaMedica.repository');
 async function getCitas(req, res) {
     try {
         const { idVeterinario, idSede } = req.query;
-        const citas = await citaRepo.getCitas(
+        const citas = await citaMedicaRepository.getCitas(
             idVeterinario ? Number(idVeterinario) : null,
             idSede ? Number(idSede) : null
         );
@@ -16,7 +16,7 @@ async function getCitas(req, res) {
 
 async function getCitasPorMascota(req, res) {
     try {
-        const { idMascota } = req.param;
+        const { idMascota } = req.params;
 
         if (!idMascota) {
             return res.status(400).json({ error: 'El id de la mascota es requerido' });
