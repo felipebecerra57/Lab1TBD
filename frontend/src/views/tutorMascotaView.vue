@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+
+import { useRouter } from 'vue-router';
 import { getMisMascotas, getMisFichas, getVacunasPendientes } from '../services/mascotasService';
 import MascotaCard from '../components/mascotaCard.vue';
 import MascotaForm from '../components/mascotaFrom.vue';
