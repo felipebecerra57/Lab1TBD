@@ -38,8 +38,18 @@ async function registrarAtencion(req, res) {
         return res.status(400).json({ error: 'Debe indicar idSede o idCita' });
     }
     try {
+        const idVet = req.usuario.idVeterinario || req.usuario.idUsuario || req.usuario.id;
+
+        // Normalizamos los datos antes de enviarlos al repository
+        const datos = {
+            ...req.body,
+            idMascota: Number(idMascota),
+            idSede: idSede ? Number(idSede) : null,
+            idCita: idCita ? Number(idCita) : null, // Convierte "" o falsy a null, o a Number si viene valor
+            peso: req.body.peso ? Number(req.body.peso) : null
+        };
         // el veterinario es el usuario logueado
-        const idAtencion = await repo.registrarAtencion(req.body, req.usuario.idUsuario);
+        const idAtencion = await repo.registrarAtencion(datos, Number(idVet));
         res.status(201).json(await repo.getAtencion(idAtencion));
     } catch (e) {
         manejarError(e, res);

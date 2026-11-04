@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '../views/LoginView.vue';
 import AgendaView from '../views/AgendaView.vue';
+import VetAgendaView from '../views/VetAgendaView.vue';
 import { jwtDecode } from 'jwt-decode';
 
 const routes = [
@@ -38,6 +39,11 @@ const routes = [
         name: 'VetAtencion',
         component: () => import('../views/VetAtencionView.vue'),
         meta: { requiresAuth: true, rol: 'VET' }
+    },
+    {
+        path: '/vet/agenda',
+        name: 'vet-agenda',
+        component: VetAgendaView
     },
     {
         path: '/agenda',

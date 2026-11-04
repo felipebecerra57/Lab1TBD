@@ -17,7 +17,7 @@
       <template v-if="rol === 'VET'">
         <li><router-link to="/vet/atencion">Atención Clínica</router-link></li>
         <li><router-link to="/vet/vacunacion">Vacunación</router-link></li>
-        <li><router-link to="/agenda">Agenda</router-link></li>
+        <li><router-link to="/vet/agenda">Agenda</router-link></li>
       </template>
 
       <!-- Enlaces exclusivos para TUTOR -->

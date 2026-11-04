@@ -10,12 +10,24 @@
       <h2>Registrar nueva atención</h2>
 
       <form @submit.prevent="registrarAtencion">
+        <!-- Badge informativo si viene de una cita -->
+        <div v-if="form.idCita" class="banner-cita">
+          <span>📌 Formulario autocompletado con la <strong>Cita #{{ form.idCita }}</strong></span>
+          <button type="button" class="btn-desvincular" @click="desvincularCita">
+            Desvincular cita
+          </button>
+        </div>
+
         <div class="fila">
           <label>
             Mascota *
             <select v-model.number="form.idMascota" required>
               <option disabled value="">Seleccione una mascota</option>
-              <option v-for="m in mascotas" :key="m.idMascota" :value="m.idMascota">
+              <option
+                  v-for="m in mascotas"
+                  :key="m.idMascota ?? m.idmascota"
+                  :value="m.idMascota ?? m.idmascota"
+              >
                 {{ m.nombre }} ({{ m.especie }})
               </option>
             </select>
@@ -175,77 +187,23 @@
 
       <p v-if="errorDetalle" class="error">{{ errorDetalle }}</p>
     </section>
-
-    <!-- ===================== Mis Turnos Asignados ===================== -->
-    <section class="tarjeta">
-      <header class="encabezado-calendario">
-        <div>
-          <h2>Mi Calendario Semanal de Turnos</h2>
-          <span class="subtitulo-semana">{{ rangoSemanaTexto }}</span>
-        </div>
-        <div class="controles-semana">
-          <button type="button" class="secundario" @click="cambiarSemana(-1)">◀ Semana anterior</button>
-          <button type="button" class="secundario" @click="irAHoy">Hoy</button>
-          <button type="button" class="secundario" @click="cambiarSemana(1)">Semana siguiente ▶</button>
-        </div>
-      </header>
-
-      <p v-if="cargandoTurnos" class="ayuda">Cargando turnos...</p>
-
-      <!-- Grilla de 7 columnas (Lunes a Domingo) -->
-      <div v-else class="calendario-grid">
-        <div
-            v-for="dia in diasSemanaCalendario"
-            :key="dia.numeroDia"
-            class="dia-columna"
-            :class="{ 'dia-hoy': dia.esHoy }"
-        >
-          <div class="dia-cabecera">
-            <span class="nombre-dia">{{ dia.nombre }}</span>
-            <span class="fecha-dia">{{ dia.fechaCorta }}</span>
-          </div>
-
-          <div class="dia-cuerpo">
-            <!-- Turno asignado para este día -->
-            <div v-if="dia.turnos.length === 0" class="sin-turnos">
-              Día libre
-            </div>
-            <div
-                v-for="t in dia.turnos"
-                :key="t.idTurno ?? t.idturno"
-                class="tarjeta-bloque-turno"
-            >
-              <div class="hora-badge">
-                🕒 {{ formatearSoloHora(t.horaInicio ?? t.horainicio) }} - {{ formatearSoloHora(t.horaTermino ?? t.horatermino) }}
-              </div>
-              <span v-if="t.idSede ?? t.idsede" class="sede-badge">
-                Sede {{ t.idSede ?? t.idsede }}
-              </span>
-            </div>
-
-            <!-- Conteo de citas agendadas -->
-            <div v-if="dia.totalCitas > 0" class="badge-citas">
-              📅 {{ dia.totalCitas }} {{ dia.totalCitas === 1 ? 'cita agendada' : 'citas agendadas' }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import api from '../services/api';
 import { jwtDecode } from 'jwt-decode';
 
 const router = useRouter();
+const route = useRoute();
 
 const mascotas = ref([]);
 const sedes = ref([]);
 const medicamentos = ref([]);
 const atenciones = ref([]);
+const citaCargada = ref(null);
 
 const guardando = ref(false);
 const mensaje = ref('');
@@ -256,153 +214,48 @@ const errorDetalle = ref('');
 const editando = ref(null);
 const edicion = reactive({ nombre: '', detalle: '' });
 
-const citasSemana = ref([]);
-const turnos = ref([]);
-const cargandoTurnos = ref(false);
-const semanaOffset = ref(0);
-const DIAS_NOMBRE = [
-  'Lunes',
-  'Martes',
-  'Miércoles',
-  'Jueves',
-  'Viernes',
-  'Sábado',
-  'Domingo'
-];
-
-// Convierte Date a 'YYYY-MM-DD' en hora local evitando desfases de toISOString
-function formatoFechaLocal(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+function desvincularCita() {
+  form.idCita = null;
+  // Actualiza la URL eliminando los query params sin recargar la página
+  router.replace({ query: {} });
 }
 
-const diasSemanaCalendario = computed(() => {
-  const hoy = new Date();
-  const diaSemanaActual = hoy.getDay() === 0 ? 7 : hoy.getDay(); // 1=Lunes, 7=Domingo
+async function cargarDatosCitaDesdeQuery() {
+  const idCitaQuery = route.query.idCita;
+  if (!idCitaQuery) return;
 
-  // Calcular el lunes de la semana según el offset
-  const lunes = new Date(hoy);
-  lunes.setDate(hoy.getDate() - (diaSemanaActual - 1) + (semanaOffset.value * 7));
-
-  const hoyStr = formatoFechaLocal(hoy);
-
-  return DIAS_NOMBRE.map((nombre, index) => {
-    const fechaDia = new Date(lunes);
-    fechaDia.setDate(lunes.getDate() + index);
-
-    const numeroDia = index + 1; // 1 = Lunes ... 7 = Domingo
-    const fechaStr = formatoFechaLocal(fechaDia);
-    const fechaCorta = fechaDia.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
-
-    // Filtrar turnos del día que coincidan con el día de la semana
-    const turnosDelDia = turnos.value.filter(t => {
-      const d = t.diaSemana ?? t.diasemana;
-      return Number(d) === numeroDia;
-    });
-
-    // Contar citas cuya fecha coincida exactamente con la fecha local de esta columna
-    const citasDelDia = citasSemana.value.filter(c => {
-      if (!c.fecha) return false;
-      const f = c.fecha.includes('T') ? c.fecha.split('T')[0] : c.fecha.slice(0, 10);
-      return f === fechaStr;
-    });
-
-    return {
-      nombre,
-      numeroDia,
-      fechaStr,
-      fechaCorta,
-      turnos: turnosDelDia,
-      totalCitas: citasDelDia.length,
-      esHoy: fechaStr === hoyStr
-    };
-  });
-});
-
-const rangoSemanaTexto = computed(() => {
-  const dias = diasSemanaCalendario.value;
-  if (!dias.length) return '';
-  return `Semana del ${dias[0].fechaCorta} al ${dias[6].fechaCorta}`;
-});
-
-function formatearSoloHora(hora) {
-  if (!hora) return '';
-  return hora.toString().slice(0, 5);
-}
-
-// Obtiene el idVeterinario del token priorizando las claves habituales
-function obtenerIdVeterinarioToken() {
-  const token = localStorage.getItem('token');
-  if (!token) return null;
   try {
-    const payload = jwtDecode(token);
-    return payload.idVeterinario || payload.id_veterinario || payload.id || payload.idUsuario || null;
-  } catch (e) {
-    console.error('Error decodificando token:', e);
-    return null;
-  }
-}
+    // 1. Buscamos en el endpoint general de citas que sí existe
+    const { data } = await api.get('/citas');
+    const listaCitas = Array.isArray(data) ? data : (data.citas || data.data || []);
 
-async function cargarTurnos() {
-  cargandoTurnos.value = true;
-  try {
-    const idVet = obtenerIdVeterinarioToken();
-    const params = { _t: Date.now() };
+    // 2. Encontramos la cita por su ID (soportando idCita o idcita)
+    const cita = listaCitas.find(c => Number(c.idCita ?? c.idcita) === Number(idCitaQuery));
 
-    // Solo mandamos el idVeterinario si es un valor numérico válido
-    if (idVet && !isNaN(Number(idVet))) {
-      params.idVeterinario = Number(idVet);
+    if (cita) {
+      const idMascota = cita.idMascota ?? cita.idmascota;
+      const idSede = cita.idSede ?? cita.idsede;
+      const motivo = cita.motivo ?? cita.motivoConsulta ?? cita.motivoconsulta ?? '';
+
+      form.idCita = Number(cita.idCita ?? cita.idcita);
+      if (idMascota) form.idMascota = Number(idMascota);
+      if (idSede) form.idSede = Number(idSede);
+      if (motivo) form.motivoConsulta = motivo;
     }
-
-    const { data } = await api.get('/turnos', {
-      params,
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
-
-    turnos.value = Array.isArray(data) ? data : (data.turnos || data.data || []);
-  } catch (e) {
-    console.error('Error al cargar turnos:', e);
-  } finally {
-    cargandoTurnos.value = false;
+  } catch (err) {
+    console.error('Error al autocompletar la cita:', err);
   }
 }
 
-async function cargarCitasSemana() {
-  const dias = diasSemanaCalendario.value;
-  if (!dias.length) return;
-  const fechaInicio = dias[0].fechaStr;
-  const fechaFin = dias[6].fechaStr;
-  const idVet = obtenerIdVeterinarioToken();
-
-  try {
-    const params = { desde: fechaInicio, hasta: fechaFin };
-    if (idVet && !isNaN(Number(idVet))) {
-      params.idVeterinario = Number(idVet);
-    }
-    const { data } = await api.get('/citas', { params });
-    citasSemana.value = Array.isArray(data) ? data : (data.citas || data.data || []);
-  } catch (e) {
-    citasSemana.value = [];
-  }
-}
-
-function cambiarSemana(delta) {
-  semanaOffset.value += delta;
-  cargarCitasSemana();
-}
-
-function irAHoy() {
-  semanaOffset.value = 0;
-  cargarCitasSemana();
-}
+// Ejecutar en onMounted después de cargar catálogos
+onMounted(async () => {
+  await cargarDatos();
+  await cargarDatosCitaDesdeQuery();
+});
 
 function formularioVacio() {
   return {
+    idCita: null,
     idMascota: '',
     idSede: '',
     peso: null,
@@ -438,8 +291,6 @@ async function cargarDatos() {
   }
 
   await cargarAtenciones();
-  await cargarTurnos();
-  await cargarCitasSemana();
 }
 
 async function cargarAtenciones() {
@@ -464,6 +315,7 @@ async function registrarAtencion() {
   guardando.value = true;
   try {
     const cuerpo = {
+      idCita: form.idCita ? Number(form.idCita) : null,
       idMascota: form.idMascota,
       idSede: form.idSede,
       peso: form.peso || null,
@@ -483,7 +335,7 @@ async function registrarAtencion() {
     const { data } = await api.post('/atenciones', cuerpo);
     mensaje.value = `Atención N° ${data.idAtencion} registrada correctamente.`;
     Object.assign(form, formularioVacio());
-    await cargarAtenciones();
+    router.replace({ query: {} });    await cargarAtenciones();
   } catch (e) {
     error.value = mensajeDeError(e);
   } finally {
@@ -629,105 +481,29 @@ button.secundario {
   padding-top: 10px;
   margin-top: 10px;
 }
-.encabezado-calendario {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.subtitulo-semana {
-  color: #475569;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-.controles-semana {
-  display: flex;
-  gap: 0.4rem;
-}
-.calendario-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(110px, 1fr));
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 6px;
-}
-.dia-columna {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  min-height: 140px;
-  display: flex;
-  flex-direction: column;
-}
-.dia-columna.dia-hoy {
-  border-color: #2c6e49;
-  background: #f0fdf4;
-}
-.dia-cabecera {
-  padding: 6px 8px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: center;
-  background: #edf2f7;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-}
 .dia-hoy .dia-cabecera {
   background: #2c6e49;
   color: white;
 }
-.nombre-dia {
-  display: block;
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-.fecha-dia {
-  font-size: 0.75rem;
-  color: inherit;
-  opacity: 0.85;
-}
-.dia-cuerpo {
-  padding: 6px;
+.banner-cita {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-}
-.sin-turnos {
-  color: #94a3b8;
-  font-size: 0.75rem;
-  text-align: center;
-  margin-top: 15px;
-  font-style: italic;
-}
-.tarjeta-bloque-turno {
-  background: #ffffff;
-  border-left: 3px solid #2c6e49;
-  border-radius: 4px;
-  padding: 6px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-.hora-badge {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-.sede-badge {
-  display: inline-block;
-  font-size: 0.7rem;
-  color: #64748b;
-  margin-top: 2px;
-}
-.badge-citas {
-  margin-top: auto;
+  justify-content: space-between;
+  align-items: center;
   background-color: #e0f2fe;
   color: #0369a1;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 4px 6px;
-  border-radius: 4px;
-  text-align: center;
   border: 1px solid #bae6fd;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 13px;
 }
+.btn-desvincular {
+  background: none;
+  border: none;
+  color: #0284c7;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
 </style>
