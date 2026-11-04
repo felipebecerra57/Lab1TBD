@@ -28,7 +28,7 @@ function agendarParaEstaMascota() {
   <article class="card">
     <header>
       <h2>{{ mascota.nombre }}</h2>
-      <span class="especie">{{ mascota.especie }}</span>
+      <span class="especie">{{ mascota.especie }} <span v-if="mascota.pendientes?.length" class="aviso">Vacuna pendiente</span></span>
     </header>
 
     <ul>
@@ -66,6 +66,7 @@ function agendarParaEstaMascota() {
 header { display: flex; justify-content: space-between; align-items: center; }
 h2 { margin: 0; font-size: 1.2rem; }
 .especie { background: #e8f4ea; color: #69ccd1; padding: 2px 10px; border-radius: 12px; font-size: 0.85rem; }
+.aviso { background: #fff0c8; color: #8a5a00; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; }
 ul { padding-left: 1.2rem; }
 button { cursor: pointer; padding: 6px 12px; }
 .ficha { margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed #ccc; }

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { getMisMascotas, getMisFichas } from '../services/mascotasService';
+import { getMisMascotas, getMisFichas, getVacunasPendientes } from '../services/mascotasService';
 import MascotaCard from '../components/mascotaCard.vue';
 import MascotaForm from '../components/mascotaFrom.vue';
 
@@ -12,20 +12,29 @@ const fichas = ref([]);
 const cargando = ref(true);
 const error = ref('');
 const mostrarForm = ref(false);
+const pendientes = ref([]);
+
 
 const mascotasConFicha = computed(() =>
     mascotas.value.map(m => ({
       ...m,
-      ficha: fichas.value.find(f => f.idMascota === m.idMascota) ?? null
+      ficha: fichas.value.find(f => f.idMascota === m.idMascota) ?? null,
+      pendientes: pendientes.value.filter(p => p.idMascota === m.idMascota)
     }))
 );
 
 async function cargar() {
   error.value = '';
   try {
-    const [m, f] = await Promise.all([getMisMascotas(), getMisFichas()]);
+    const [m, f, p] = await Promise.all([
+      getMisMascotas(),
+      getMisFichas(),
+      // Si esta consulta falla, la lista de mascotas igual se muestra
+      getVacunasPendientes().catch(() => [])
+    ]);
     mascotas.value = m;
     fichas.value = f;
+    pendientes.value = p;
   } catch (e) {
     error.value = e.response?.data?.error ?? 'No se pudieron cargar tus mascotas';
   } finally {
@@ -65,6 +74,8 @@ function cerrarSesion() {
     </div>
 
     <MascotaForm v-if="mostrarForm" @creada="alCrear" @cancelar="mostrarForm = false" />
+
+    <VacunasPendientes :pendientes="pendientes" />
 
     <p v-if="cargando">Cargando...</p>
     <p v-else-if="error" class="error">{{ error }}</p>
