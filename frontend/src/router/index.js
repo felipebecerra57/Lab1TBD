@@ -1,8 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '../views/LoginView.vue';
 import AgendaView from '../views/AgendaView.vue';
+import { jwtDecode } from 'jwt-decode';
 
 const routes = [
+    {
+        path: '/',
+        redirect: '/login'
+    },
     {
         path: '/login',
         name: 'Login',
@@ -14,6 +19,12 @@ const routes = [
         name: 'AdminSedes',
         component: () => import('../views/AdminSedesView.vue'), // La crearemos en el próximo paso
         meta: { requiresAuth: true, rol: 'ADMIN' }
+    },
+    {
+        path: '/admin/estadisticas',
+        name: 'AdminEstadisticas',
+        component: () => import('../views/AdminEstadisticasView.vue'),
+        meta: {requiresAuth: true, rol: 'ADMIN'}
     },
     {
         path: '/tutor/mascotas',
@@ -32,6 +43,20 @@ const routes = [
         path: '/agenda',
         name: 'Agenda',
         component: AgendaView
+    },
+    {
+        path: '/admin/inventario',
+        name: 'AdminInventario',
+        component: () => import('../views/AdminInventarioView.vue'),
+        meta: { requiresAuth: true, rol: 'ADMIN' }
+    },
+    {
+        path: '/vet/vacunacion',
+        name: 'PlanVacunacion',
+        component: () => import('../views/PlanVacunacionView.vue'),
+        // Aquí puedes usar un array si necesitas múltiples roles, 
+        // o adaptarlo a la lógica actual de tu meta.rol
+        meta: { requiresAuth: true, rol: ['VET', 'ADMIN'] } // O ADMIN dependiendo de cómo configures tu beforeEach
     }
 ];
 
@@ -60,13 +85,28 @@ function leerSesion() {
 // Guardián de Navegación (Protege las rutas en el frontend)
 router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('token');
+    const rol = localStorage.getItem('rol');
 
-    // Si la ruta requiere autenticación y no hay token, lo echamos al login
+    // 1. Validar si requiere autenticación
     if (to.meta.requiresAuth && !token) {
-        next('/login');
-    } else {
-        next();
+        return next('/login');
     }
+
+    // 2. Validar roles si la ruta lo exige
+    if (to.meta.rol) {
+        // Convertimos a arreglo por si alguna ruta antigua solo tiene un string (ej. rol: 'ADMIN')
+        const rolesPermitidos = Array.isArray(to.meta.rol) ? to.meta.rol : [to.meta.rol];
+        
+        if (!rolesPermitidos.includes(rol)) {
+            // Si no tiene el rol permitido, lo redirigimos a su vista principal
+            if (rol === 'TUTOR') return next('/tutor/mascotas');
+            if (rol === 'VET') return next('/vet/atencion');
+            if (rol === 'ADMIN') return next('/admin/sedes');
+            return next('/'); 
+        }
+    }
+
+    next();
 });
 
 export default router;

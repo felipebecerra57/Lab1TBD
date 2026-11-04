@@ -16,7 +16,7 @@ async function listarPorMascota(idMascota, idVacuna){
             vc.numeroDosis AS "numeroDosis", vc.fechaAplicacion::text AS "fechaAplicacion",
             vc.fechaProximaDosis::text AS "fechaProximaDosis" 
         from Vacunacion vc join Vacuna v on vc.idVacuna = v.idVacuna
-        where vc.idVacuna = $2 and ($2::int is null or vc.idVacuna = $2)
+        where vc.idMascota = $1 and ($2::int is null or vc.idVacuna = $2)
         order by v.nombreV, vc.numeroDosis`,
         [ idMascota, idVacuna ?? null]
     );
@@ -58,7 +58,4 @@ async function listarPendientes(dias, idTutor) {
     return rows;
 }
 
-
-
 module.exports = { aplicarPlan, listarPorMascota, listarPendientes};
-

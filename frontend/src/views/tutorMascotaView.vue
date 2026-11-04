@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import VacunasPendientes from '../components/vacunasPendientes.vue';
 
 import { useRouter } from 'vue-router';
 import { getMisMascotas, getMisFichas, getVacunasPendientes } from '../services/mascotasService';
@@ -8,6 +8,7 @@ import MascotaCard from '../components/mascotaCard.vue';
 import MascotaForm from '../components/mascotaFrom.vue';
 
 const router = useRouter();
+
 
 const mascotas = ref([]);
 const fichas = ref([]);

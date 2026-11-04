@@ -81,7 +81,7 @@ async function actualizarTurno(idTurno, idVeterinario, idSede, diaSemana, horaIn
          set idVeterinario = coalesce($1, idVeterinario),
              idSede = coalesce($2, idSede),
              diaSemana = coalesce($3, diaSemana),
-             horaInicio = coalesce($4, horaInico),
+             horaInicio = coalesce($4, horaInicio),
              horaTermino = coalesce($5, horaTermino)
          where idTurno = $6`,
         [

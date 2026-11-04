@@ -352,15 +352,15 @@ BEGIN
             nombreAnterior, 
             nombreNuevo, 
             detalleAnterior, 
-            detalleNuevo
-            -- idUsuario se podría pasar desde el backend si implementamos variables de sesión en Postgres, 
-            -- por ahora lo dejaremos nulo para que la DB se encargue solo del historial del cambio.
+            detalleNuevo, 
+            idUsuario
         ) VALUES (
             NEW.idDiagnostico, 
             OLD.nombre, 
             NEW.nombre, 
             OLD.detalle, 
-            NEW.detalle
+            NEW.detalle, 
+            NULLIF(current_setting('app.id_usuario', true), '')::int
         );
     END IF;
     
