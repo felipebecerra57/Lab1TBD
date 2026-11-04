@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '../views/LoginView.vue';
+import AgendaView from '../views/AgendaView.vue';
 
 const routes = [
     {
@@ -19,6 +20,22 @@ const routes = [
         name: 'AdminEstadisticas',
         component: () => import('../views/AdminEstadisticasView.vue'),
         meta: {requiresAuth: true, rol: 'ADMIN'}
+        path: '/tutor/mascotas',
+        name: 'TutorMascotas',
+        component: () => import('../views/tutorMascotaView.vue'),
+        meta: { requiresAuth: true, rol: 'TUTOR' }
+    },
+    {
+        // Pantalla del veterinario: registrar y revisar atenciones clínicas
+        path: '/vet/atencion',
+        name: 'VetAtencion',
+        component: () => import('../views/VetAtencionView.vue'),
+        meta: { requiresAuth: true, rol: 'VET' }
+    },
+    {
+        path: '/agenda',
+        name: 'Agenda',
+        component: AgendaView
     }
 
 ];
@@ -27,6 +44,23 @@ const router = createRouter({
     history: createWebHistory(),
     routes
 });
+
+// Devuelve los datos del token si es válido y no ha vencido; si no, null
+function leerSesion() {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+        const payload = jwtDecode(token);
+        if (payload.exp * 1000 < Date.now()) {
+            localStorage.removeItem('token');
+            return null;
+        }
+        return payload; // { idUsuario, rol, exp, ... }
+    } catch {
+        localStorage.removeItem('token');
+        return null;
+    }
+}
 
 // Guardián de Navegación (Protege las rutas en el frontend)
 router.beforeEach((to, from, next) => {
