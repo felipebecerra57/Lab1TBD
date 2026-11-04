@@ -11,7 +11,7 @@ async function getMascotasPorTutor(idTutor){
         order by m.idMascota`,
         [idTutor]
     );
-    return rows[0];
+    return rows;
 }
 async function getMascota(idMascota, idTutor){
     const {rows} = await pool.query(
@@ -20,7 +20,7 @@ async function getMascota(idMascota, idTutor){
         where m.idMascota = $1 and ($2::int is null or $2 = m.idTutor)`,
         [idMascota, idTutor]
     );
-    return rows;
+    return rows[0];
 }
 // Crear la mascota con su ficha clinica en la misma transacción
 async function crearMascota({nombre, idTutor, idEspecie, anioNacimiento, peso}){

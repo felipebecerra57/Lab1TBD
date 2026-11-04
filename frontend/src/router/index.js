@@ -19,6 +19,13 @@ const routes = [
         name: 'TutorMascotas',
         component: () => import('../views/tutorMascotaView.vue'),
         meta: { requiresAuth: true, rol: 'TUTOR' }
+    },
+    {
+        // Pantalla del veterinario: registrar y revisar atenciones clínicas
+        path: '/vet/atencion',
+        name: 'VetAtencion',
+        component: () => import('../views/VetAtencionView.vue'),
+        meta: { requiresAuth: true, rol: 'VET' }
     }
 ];
 
