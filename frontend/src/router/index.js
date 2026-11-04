@@ -13,6 +13,13 @@ const routes = [
         name: 'AdminSedes',
         component: () => import('../views/AdminSedesView.vue'), // La crearemos en el próximo paso
         meta: { requiresAuth: true, rol: 'ADMIN' }
+    },
+    {
+        // Pantalla del veterinario: registrar y revisar atenciones clínicas
+        path: '/vet/atencion',
+        name: 'VetAtencion',
+        component: () => import('../views/VetAtencionView.vue'),
+        meta: { requiresAuth: true, rol: 'VET' }
     }
 ];
 
