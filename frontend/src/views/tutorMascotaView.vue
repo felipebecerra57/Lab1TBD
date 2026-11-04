@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { getMisMascotas, getMisFichas } from '../services/mascotasService';
-import MascotaCard from '../components/MascotaCard.vue';
-import MascotaForm from '../components/MascotaForm.vue';
+import MascotaCard from '../components/mascotaCard.vue';
+import MascotaForm from '../components/mascotaForm.vue';
 
 const mascotas = ref([]);
 const fichas = ref([]);
