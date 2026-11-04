@@ -157,7 +157,7 @@ URL base: `http://localhost:3000/api`
 
 ### Ejemplos
  
-Las respuestas se obtuvieron ejecutando la API con los datos de prueba del script. En las listas largas se muestran solo los primeros elementos.
+Las respuestas se obtuvieron ejecutando la API con los datos de prueba del script.
  
 #### Iniciar sesión
 `POST /api/auth/login`
@@ -305,7 +305,6 @@ Respuesta `200`:
 ```
 Con un usuario que no es ADMIN, la respuesta es `403` 
 
-#### Crear una vacuna
 #### Crear una vacuna
 `POST /api/vacunas` · ADMIN (`intervaloDias` es obligatorio si `totalDosis` es mayor que 1)
 ```json
