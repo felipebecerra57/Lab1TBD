@@ -42,6 +42,12 @@ const manejarLogin = async () => {
     // 3. Decodificar el token para saber quién entró
     const payload = jwtDecode(token);
     
+    // ¡AQUÍ ESTABA EL DETALLE! Guardar el rol (y el ID) en el localStorage
+    localStorage.setItem('rol', payload.rol);
+    if (payload.id) {
+       localStorage.setItem('usuarioId', payload.id); 
+    }
+    
     // 4. Redirigir según el rol
     if (payload.rol === 'ADMIN') {
       router.push('/admin/sedes');
