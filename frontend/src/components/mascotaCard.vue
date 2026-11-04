@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 
 const props = defineProps({
   mascota: {tipe: Object, required: true}
 });
 
+const router = useRouter();
 const verFicha = ref(false);
 
 const edad = computed(() =>
@@ -12,6 +14,13 @@ const edad = computed(() =>
         ? new Date().getFullYear() - props.mascota.anioNacimiento
         : null
 );
+function agendarParaEstaMascota() {
+  const id = props.mascota.idMascota ?? props.mascota.idmascota;
+  router.push({
+    path: '/agenda',
+    query: { idMascota: id, nombreMascota: props.mascota.nombre }
+  });
+}
 
 </script>
 
@@ -27,9 +36,15 @@ const edad = computed(() =>
       <li v-if="mascota.peso">Peso: {{ mascota.peso }} kg</li>
     </ul>
 
-    <button @click="verFicha = !verFicha">
-      {{ verFicha ? 'Ocultar ficha clínica' : 'Ver ficha clínica' }}
-    </button>
+    <div class="acciones-card">
+      <button type="button" @click="verFicha = !verFicha">
+        {{ verFicha ? 'Ocultar ficha clínica' : 'Ver ficha clínica' }}
+      </button>
+
+      <button type="button" class="btn-agendar" @click="agendarParaEstaMascota">
+        📅 Agendar cita
+      </button>
+    </div>
 
     <div v-if="verFicha" class="ficha">
       <template v-if="mascota.ficha">
@@ -54,4 +69,18 @@ h2 { margin: 0; font-size: 1.2rem; }
 ul { padding-left: 1.2rem; }
 button { cursor: pointer; padding: 6px 12px; }
 .ficha { margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed #ccc; }
+.btn-agendar {
+  margin-top: 10px;
+  background-color: #2c6e49;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  font-weight: 600;
+}
+.btn-agendar:hover {
+  background-color: #225638;
+}
 </style>

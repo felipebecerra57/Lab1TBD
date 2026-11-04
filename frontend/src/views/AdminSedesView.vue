@@ -57,6 +57,7 @@
           <td>
             <button @click="prepararEdicion(sede)" class="btn-editar">Editar</button>
             <button @click="eliminarSede(sede.idSede)" class="btn-eliminar">Eliminar</button>
+            <button @click="irAAgenda(sede.idSede)" class="btn-agenda">Ver Agenda</button>
           </td>
         </tr>
         <tr v-if="sedes.length === 0">
@@ -69,6 +70,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import api from '../services/api';
 
 const sedes = ref([]);
@@ -77,6 +79,12 @@ const formulario = ref({ nombre: '', calle: '', numero: '', comuna: '', telefono
 const editandoId = ref(null);
 const mensaje = ref('');
 const esError = ref(false);
+const router = useRouter();
+
+const irAAgenda = (idSede) => {
+  // Redirige a la ruta /agenda pasando opcionalmente el id de la sede como query param
+  router.push({ path: '/agenda', query: { sede: idSede } });
+};
 
 const cargarSedes = async () => {
   try {
@@ -158,6 +166,11 @@ onMounted(() => {
 .btn-cancelar { background-color: #9e9e9e; color: white; }
 .btn-editar { background-color: #2196F3; color: white; margin-right: 5px; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;}
 .btn-eliminar { background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;}
+.btn-agenda { background-color: #2c6e49; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: 500;}
+
+.btn-agenda:hover {
+  background-color: #225638;
+}
 .tabla-sedes { width: 100%; border-collapse: collapse; margin-top: 10px; }
 .tabla-sedes th, .tabla-sedes td { border: 1px solid #ddd; padding: 10px; text-align: left; }
 .tabla-sedes th { background-color: #f2f2f2; }

@@ -1,8 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { getMisMascotas, getMisFichas } from '../services/mascotasService';
 import MascotaCard from '../components/mascotaCard.vue';
-import MascotaForm from '../components/mascotaForm.vue';
+import MascotaForm from '../components/mascotaFrom.vue';
+
+const router = useRouter();
 
 const mascotas = ref([]);
 const fichas = ref([]);
@@ -37,13 +40,28 @@ async function alCrear() {
   mostrarForm.value = false;
   await cargar();
 }
+
+function cerrarSesion() {
+  localStorage.removeItem('token');
+  router.push('/login');
+}
 </script>
 
 <template>
   <section class="mis-mascotas">
     <div class="encabezado">
       <h1>Mis mascotas</h1>
-      <button v-if="!mostrarForm" @click="mostrarForm = true">+ Registrar mascota</button>
+      <div class="acciones-encabezado">
+        <button class="btn-agenda" @click="router.push('/agenda')">
+          📅 Ver disponibilidad / Agenda
+        </button>
+        <button v-if="!mostrarForm" @click="mostrarForm = true">
+          + Registrar mascota
+        </button>
+        <button class="btn-salir" @click="cerrarSesion">
+          Cerrar sesión
+        </button>
+      </div>
     </div>
 
     <MascotaForm v-if="mostrarForm" @creada="alCrear" @cancelar="mostrarForm = false" />
@@ -67,4 +85,26 @@ async function alCrear() {
 .encabezado { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
 .error { color: #b00020; }
+button {
+  padding: 8px 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-weight: 500;
+}
+
+.btn-agenda {
+  background-color: #2c6e49;
+  color: white;
+  border: none;
+}
+
+.btn-agenda:hover {
+  background-color: #225638;
+}
+
+.btn-salir {
+  background-color: #f1f5f9;
+  color: #475569;
+}
 </style>

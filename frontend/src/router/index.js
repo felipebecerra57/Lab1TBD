@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '../views/LoginView.vue';
+import AgendaView from '../views/AgendaView.vue';
 
 const routes = [
     {
@@ -26,6 +27,11 @@ const routes = [
         name: 'VetAtencion',
         component: () => import('../views/VetAtencionView.vue'),
         meta: { requiresAuth: true, rol: 'VET' }
+    },
+    {
+        path: '/agenda',
+        name: 'Agenda',
+        component: AgendaView
     }
 ];
 
