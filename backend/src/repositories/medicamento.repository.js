@@ -56,4 +56,37 @@ async function eliminarMedicamento(idMedicamento){
     );
     return rowCount >0;
 }
-module.exports = {getMedicamentos, getMedicamentoPorId, crearMedicamento, actualizarMedicamento, eliminarMedicamento};
+
+async function getPrincipiosActivosDeMedicamento(idMedicamento) {
+    const { rows } = await pool.query(
+        `select pa.idPrincipioActivo AS "idPrincipioActivo", pa.nombre
+         from MedCompone mc
+         join PrincipioActivo pa on mc.idPrincipioActivo = pa.idPrincipioActivo
+         where mc.idMedicamento = $1
+         order by pa.nombre asc`,
+    [idMedicamento]
+);
+    return rows;
+}
+
+async function agregarPrincipioActivoAMedicamento(idMedicamento, idPrincipioActivo) {
+    const { rows } = await pool.query(
+        `insert into MedCompone (idMedicamento, idPrincipioActivo)
+         values ($1, $2)
+         returning idMedicamento as "idMedicamento", idPrincipioActivo as "idPrincipioActivo"`,
+    [idMedicamento, idPrincipioActivo]
+);
+    return rows[0];
+}
+
+async function quitarPrincipioActivoDeMedicamento(idMedicamento, idPrincipioActivo) {
+    const { rowCount } = await pool.query(
+        `delete from MedCompone
+         where idMedicamento = $1
+           and idPrincipioActivo = $2`,
+    [idMedicamento, idPrincipioActivo]
+);
+    return rowCount > 0;
+}
+module.exports = {getMedicamentos, getMedicamentoPorId, crearMedicamento, actualizarMedicamento, eliminarMedicamento,
+    getPrincipiosActivosDeMedicamento, agregarPrincipioActivoAMedicamento, quitarPrincipioActivoDeMedicamento};

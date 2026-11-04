@@ -119,4 +119,80 @@ async function eliminarMedicamento(req, res) {
     }
 }
 
-module.exports = {getMedicamentos, getMedicamentoPorId, crearMedicamento, actualizarMedicamento, eliminarMedicamento};
+async function getPrincipiosActivos(req, res) {
+    try {
+        const { idMedicamento } = req.params;
+        const idMed = Number(idMedicamento);
+
+        if (isNaN(idMed)) {
+            return res.status(400).json({ error: 'idMedicamento debe ser un número válido' });
+        }
+
+        const principios = await medicamentoRepository.getPrincipiosActivosDeMedicamento(idMed);
+        return res.status(200).json(principios);
+    } catch (error) {
+        console.error('Error al obtener principios activos del medicamento:', error);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+}
+
+async function agregarPrincipioActivo(req, res) {
+    try {
+        const { idMedicamento } = req.params;
+        const { idPrincipioActivo } = req.body;
+
+        const idMed = Number(idMedicamento);
+        const idPa = Number(idPrincipioActivo);
+
+        if (isNaN(idMed) || isNaN(idPa)) {
+            return res.status(400).json({
+                error: 'idMedicamento e idPrincipioActivo deben ser números válidos'
+            });
+        }
+
+        const vinculacion = await medicamentoRepository.agregarPrincipioActivoAMedicamento(idMed, idPa);
+        return res.status(201).json({
+            mensaje: 'Principio activo asociado al medicamento exitosamente',
+            vinculacion
+        });
+    } catch (error) {
+        // 23505 = Registro duplicado (el medicamento ya contiene ese principio activo)
+        if (error.code === '23505') {
+            return res.status(409).json({ error: 'El principio activo ya está asignado a este medicamento' });
+        }
+        // 23503 = El medicamento o el principio activo no existen en la base de datos
+        if (error.code === '23503') {
+            return res.status(404).json({ error: 'El medicamento o el principio activo no existen' });
+        }
+        console.error('Error al asociar principio activo al medicamento:', error);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+}
+
+async function quitarPrincipioActivo(req, res) {
+    try {
+        const { idMedicamento, idPrincipioActivo } = req.params;
+        const idMed = Number(idMedicamento);
+        const idPa = Number(idPrincipioActivo);
+
+        if (isNaN(idMed) || isNaN(idPa)) {
+            return res.status(400).json({
+                error: 'idMedicamento e idPrincipioActivo deben ser números válidos'
+            });
+        }
+
+        const eliminado = await medicamentoRepository.quitarPrincipioActivoDeMedicamento(idMed, idPa);
+
+        if (!eliminado) {
+            return res.status(404).json({ error: 'Asociación no encontrada entre el medicamento y el principio activo' });
+        }
+
+        return res.status(200).json({ mensaje: 'Principio activo desvinculado exitosamente del medicamento' });
+    } catch (error) {
+        console.error('Error al desvincular principio activo:', error);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+}
+
+module.exports = {getMedicamentos, getMedicamentoPorId, crearMedicamento, actualizarMedicamento, eliminarMedicamento,
+    getPrincipiosActivos, agregarPrincipioActivo, quitarPrincipioActivo};

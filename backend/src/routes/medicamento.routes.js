@@ -9,5 +9,8 @@ router.get('/:idMedicamento', verificarRol(['VET', 'ADMIN']), medicamentoControl
 router.post('/', verificarRol(['ADMIN']), medicamentoController.crearMedicamento);
 router.put('/:idMedicamento', verificarRol(['ADMIN']), medicamentoController.actualizarMedicamento);
 router.delete('/:idMedicamento', verificarRol(['ADMIN']), medicamentoController.eliminarMedicamento);
+router.get('/:idMedicamento/principios-activos', verificarRol(['VET', 'ADMIN']), medicamentoController.getPrincipiosActivos);
+router.post('/:idMedicamento/principios-activos', verificarRol(['ADMIN']), medicamentoController.agregarPrincipioActivo);
+router.delete('/:idMedicamento/principios-activos/:idPrincipioActivo', verificarRol(['ADMIN']), medicamentoController.quitarPrincipioActivo);
 
 module.exports = router;
