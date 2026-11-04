@@ -10,12 +10,24 @@
       <h2>Registrar nueva atención</h2>
 
       <form @submit.prevent="registrarAtencion">
+        <!-- Badge informativo si viene de una cita -->
+        <div v-if="form.idCita" class="banner-cita">
+          <span>📌 Formulario autocompletado con la <strong>Cita #{{ form.idCita }}</strong></span>
+          <button type="button" class="btn-desvincular" @click="desvincularCita">
+            Desvincular cita
+          </button>
+        </div>
+
         <div class="fila">
           <label>
             Mascota *
             <select v-model.number="form.idMascota" required>
               <option disabled value="">Seleccione una mascota</option>
-              <option v-for="m in mascotas" :key="m.idMascota" :value="m.idMascota">
+              <option
+                  v-for="m in mascotas"
+                  :key="m.idMascota ?? m.idmascota"
+                  :value="m.idMascota ?? m.idmascota"
+              >
                 {{ m.nombre }} ({{ m.especie }})
               </option>
             </select>
@@ -62,30 +74,30 @@
 
         <table v-if="form.medicamentos.length" class="tabla">
           <thead>
-            <tr>
-              <th>Medicamento</th>
-              <th>Cantidad *</th>
-              <th>Dosis</th>
-              <th>Duración (meses)</th>
-              <th></th>
-            </tr>
+          <tr>
+            <th>Medicamento</th>
+            <th>Cantidad *</th>
+            <th>Dosis</th>
+            <th>Duración (meses)</th>
+            <th></th>
+          </tr>
           </thead>
           <tbody>
-            <tr v-for="(med, i) in form.medicamentos" :key="i">
-              <td>
-                <select v-if="medicamentos.length" v-model.number="med.idMedicamento" required>
-                  <option disabled value="">Seleccione</option>
-                  <option v-for="m in medicamentos" :key="m.idMedicamento" :value="m.idMedicamento">
-                    {{ m.nombre }}
-                  </option>
-                </select>
-                <input v-else type="number" min="1" v-model.number="med.idMedicamento" placeholder="ID" required />
-              </td>
-              <td><input type="number" min="1" v-model.number="med.cantidad" required /></td>
-              <td><input type="number" min="1" v-model.number="med.dosis" /></td>
-              <td><input type="number" min="1" v-model.number="med.duracionMeses" /></td>
-              <td><button type="button" class="secundario" @click="quitarMedicamento(i)">Quitar</button></td>
-            </tr>
+          <tr v-for="(med, i) in form.medicamentos" :key="i">
+            <td>
+              <select v-if="medicamentos.length" v-model.number="med.idMedicamento" required>
+                <option disabled value="">Seleccione</option>
+                <option v-for="m in medicamentos" :key="m.idMedicamento" :value="m.idMedicamento">
+                  {{ m.nombre }}
+                </option>
+              </select>
+              <input v-else type="number" min="1" v-model.number="med.idMedicamento" placeholder="ID" required />
+            </td>
+            <td><input type="number" min="1" v-model.number="med.cantidad" required /></td>
+            <td><input type="number" min="1" v-model.number="med.dosis" /></td>
+            <td><input type="number" min="1" v-model.number="med.duracionMeses" /></td>
+            <td><button type="button" class="secundario" @click="quitarMedicamento(i)">Quitar</button></td>
+          </tr>
           </tbody>
         </table>
 
@@ -109,28 +121,28 @@
 
       <table v-else class="tabla">
         <thead>
-          <tr>
-            <th>N°</th>
-            <th>Fecha</th>
-            <th>Mascota</th>
-            <th>Motivo</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
+        <tr>
+          <th>N°</th>
+          <th>Fecha</th>
+          <th>Mascota</th>
+          <th>Motivo</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
         </thead>
         <tbody>
-          <tr v-for="a in atenciones" :key="a.idAtencion">
-            <td>{{ a.idAtencion }}</td>
-            <td>{{ formatearFecha(a.fecha) }}</td>
-            <td>{{ nombreMascota(a.idMascota) }}</td>
-            <td>{{ a.motivoConsulta }}</td>
-            <td>
+        <tr v-for="a in atenciones" :key="a.idAtencion">
+          <td>{{ a.idAtencion }}</td>
+          <td>{{ formatearFecha(a.fecha) }}</td>
+          <td>{{ nombreMascota(a.idMascota) }}</td>
+          <td>{{ a.motivoConsulta }}</td>
+          <td>
               <span :class="a.cerrada ? 'estado cerrada' : 'estado abierta'">
                 {{ a.cerrada ? 'Cerrada' : 'Abierta' }}
               </span>
-            </td>
-            <td><button class="secundario" @click="verDetalle(a.idAtencion)">Ver</button></td>
-          </tr>
+          </td>
+          <td><button class="secundario" @click="verDetalle(a.idAtencion)">Ver</button></td>
+        </tr>
         </tbody>
       </table>
     </section>
@@ -179,16 +191,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import api from '../services/api';
+import { jwtDecode } from 'jwt-decode';
 
 const router = useRouter();
+const route = useRoute();
 
 const mascotas = ref([]);
 const sedes = ref([]);
 const medicamentos = ref([]);
 const atenciones = ref([]);
+const citaCargada = ref(null);
 
 const guardando = ref(false);
 const mensaje = ref('');
@@ -199,8 +214,48 @@ const errorDetalle = ref('');
 const editando = ref(null);
 const edicion = reactive({ nombre: '', detalle: '' });
 
+function desvincularCita() {
+  form.idCita = null;
+  // Actualiza la URL eliminando los query params sin recargar la página
+  router.replace({ query: {} });
+}
+
+async function cargarDatosCitaDesdeQuery() {
+  const idCitaQuery = route.query.idCita;
+  if (!idCitaQuery) return;
+
+  try {
+    // 1. Buscamos en el endpoint general de citas que sí existe
+    const { data } = await api.get('/citas');
+    const listaCitas = Array.isArray(data) ? data : (data.citas || data.data || []);
+
+    // 2. Encontramos la cita por su ID (soportando idCita o idcita)
+    const cita = listaCitas.find(c => Number(c.idCita ?? c.idcita) === Number(idCitaQuery));
+
+    if (cita) {
+      const idMascota = cita.idMascota ?? cita.idmascota;
+      const idSede = cita.idSede ?? cita.idsede;
+      const motivo = cita.motivo ?? cita.motivoConsulta ?? cita.motivoconsulta ?? '';
+
+      form.idCita = Number(cita.idCita ?? cita.idcita);
+      if (idMascota) form.idMascota = Number(idMascota);
+      if (idSede) form.idSede = Number(idSede);
+      if (motivo) form.motivoConsulta = motivo;
+    }
+  } catch (err) {
+    console.error('Error al autocompletar la cita:', err);
+  }
+}
+
+// Ejecutar en onMounted después de cargar catálogos
+onMounted(async () => {
+  await cargarDatos();
+  await cargarDatosCitaDesdeQuery();
+});
+
 function formularioVacio() {
   return {
+    idCita: null,
     idMascota: '',
     idSede: '',
     peso: null,
@@ -212,7 +267,6 @@ function formularioVacio() {
 }
 const form = reactive(formularioVacio());
 
-// Saca el mensaje de error que manda el backend (stock, alergia, etc.)
 function mensajeDeError(e) {
   if (e.response?.status === 401) {
     cerrarSesion();
@@ -229,12 +283,13 @@ async function cargarDatos() {
   } catch (e) {
     error.value = mensajeDeError(e);
   }
-  // Si todavía no existe el endpoint de medicamentos, se ingresa el ID a mano
+
   try {
     medicamentos.value = (await api.get('/medicamentos')).data;
   } catch {
     medicamentos.value = [];
   }
+
   await cargarAtenciones();
 }
 
@@ -260,6 +315,7 @@ async function registrarAtencion() {
   guardando.value = true;
   try {
     const cuerpo = {
+      idCita: form.idCita ? Number(form.idCita) : null,
       idMascota: form.idMascota,
       idSede: form.idSede,
       peso: form.peso || null,
@@ -279,7 +335,7 @@ async function registrarAtencion() {
     const { data } = await api.post('/atenciones', cuerpo);
     mensaje.value = `Atención N° ${data.idAtencion} registrada correctamente.`;
     Object.assign(form, formularioVacio());
-    await cargarAtenciones();
+    router.replace({ query: {} });    await cargarAtenciones();
   } catch (e) {
     error.value = mensajeDeError(e);
   } finally {
@@ -313,7 +369,6 @@ function editarDiagnostico(d) {
   edicion.detalle = d.detalle;
 }
 
-// Tarea 6: si la atención está cerrada, el trigger guarda el cambio en la auditoría
 async function guardarDiagnostico(idDiagnostico) {
   errorDetalle.value = '';
   try {
@@ -426,4 +481,29 @@ button.secundario {
   padding-top: 10px;
   margin-top: 10px;
 }
+.dia-hoy .dia-cabecera {
+  background: #2c6e49;
+  color: white;
+}
+.banner-cita {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 13px;
+}
+.btn-desvincular {
+  background: none;
+  border: none;
+  color: #0284c7;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
 </style>

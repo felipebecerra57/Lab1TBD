@@ -2,6 +2,7 @@ const turnoRepository = require('../repositories/turno.repository');
 
 async function getTurnos(req, res) {
     try {
+
         const { idVeterinario, idSede, diaSemana } = req.query;
         const turnos = await turnoRepository.getTurnos(
             idVeterinario ? Number(idVeterinario) : null,
