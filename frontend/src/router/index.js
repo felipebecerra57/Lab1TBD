@@ -13,7 +13,14 @@ const routes = [
         name: 'AdminSedes',
         component: () => import('../views/AdminSedesView.vue'), // La crearemos en el próximo paso
         meta: { requiresAuth: true, rol: 'ADMIN' }
+    },
+    {
+        path: '/admin/estadisticas',
+        name: 'AdminEstadisticas',
+        component: () => import('../views/AdminEstadisticasView.vue'),
+        meta: {requiresAuth: true, rol: 'ADMIN'}
     }
+
 ];
 
 const router = createRouter({
