@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import VacunasPendientes from '../components/vacunasPendientes.vue';
 
 import { useRouter } from 'vue-router';
 import { getMisMascotas, getMisFichas, getVacunasPendientes } from '../services/mascotasService';

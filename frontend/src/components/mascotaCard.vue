@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 const props = defineProps({
-  mascota: {tipe: Object, required: true}
+  mascota: { type: Object, required: true }
 });
 
 const router = useRouter();

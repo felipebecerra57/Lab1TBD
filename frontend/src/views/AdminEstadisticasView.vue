@@ -40,7 +40,7 @@
                         <td>{{fila.diagnostico}}</td>
                         <td class="numero">{{fila.cantidad_atenciones}}</td>
                     </tr>
-                    <tr v-if="filasFiltradas.lenght === 0">
+                    <tr v-if="filasFiltradas.length === 0">
                         <td colspan="4" style="text-align: center;">No hay atenciones registradas en este periodo.</td>
                     </tr>
                 </tbody>
