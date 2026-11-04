@@ -102,7 +102,7 @@ DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=la_contraseña_de_tu_postgres
 DB_NAME=veterinaria
-JWT_SECRET=una_clave_larga_y_secreta
+JWT_SECRET=una_clave_ultralarga
 PORT=3000
 ```
  
