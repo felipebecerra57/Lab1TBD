@@ -26,7 +26,7 @@ app.use('/api/citas', citaRoutes);
 app.use('/api/turnos', turnoRoutes);
 app.use('/api/medicamentos', medicamentoRoutes);
 app.use('/api/reportes', reporteRoutes);
-app.use('/api/inventarios', inventarioRoutes);
+app.use('/api/inventario', inventarioRoutes);
 app.use('/api/usuarios', require('./routes/usuario.routes'));
 app.use('/api/diagnosticos', require('./routes/diagnostico.routes'));
 app.use('/api/recetas', require('./routes/receta.routes'));
