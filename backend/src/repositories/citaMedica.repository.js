@@ -41,7 +41,16 @@ async function crearCita(fecha, idVeterinario, idMascota, idSede, estado, modali
     `insert into CitaMedica (fecha, idVeterinario, idMascota, idSede, estado, modalidad, direccionDomicilio, duracionMin)
      values ($1, $2, $3, $4, coalesce($5, 'PROGRAMADA'), coalesce($6, 'SEDE'), $7, coalesce($8, 30))
      returning idCita as "idCita"`,
-    [fecha, idVeterinario, idMascota, idSede, estado ?? null, modalidad ?? null, direccionDomicilio ?? null, duracionMin ?? null,]
+        [
+            fecha ?? null,
+            idVeterinario ?? null,
+            idMascota ?? null,
+            idSede ?? null,
+            estado ?? null,
+            modalidad ?? null,
+            direccionDomicilio ?? null,
+            duracionMin ?? null
+        ]
     );
     return rows[0]?.idCita;
 }

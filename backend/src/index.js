@@ -8,7 +8,10 @@ require('./jobs/refrescarEstadisticas');
 const authRoutes = require('./routes/authRoutes');
 const sedeRoutes = require('./routes/sede.routes');
 const citaRoutes = require('./routes/citaMedica.routes');
+const turnoRoutes = require('./routes/turno.routes');
+const medicamentoRoutes = require('./routes/medicamento.routes');
 const reporteRoutes = require('./routes/reporteRoutes');
+const inventarioRoutes = require('./routes/inventario.routes');
 
 const app = express();
 
@@ -20,7 +23,10 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/sedes', sedeRoutes);
 app.use('/api/citas', citaRoutes);
+app.use('/api/turnos', turnoRoutes);
+app.use('/api/medicamentos', medicamentoRoutes);
 app.use('/api/reportes', reporteRoutes);
+app.use('/api/inventarios', inventarioRoutes);
 app.use('/api/usuarios', require('./routes/usuario.routes'));
 app.use('/api/diagnosticos', require('./routes/diagnostico.routes'));
 app.use('/api/recetas', require('./routes/receta.routes'));
