@@ -1,8 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '../views/LoginView.vue';
 import AgendaView from '../views/AgendaView.vue';
+import { jwtDecode } from 'jwt-decode';
 
 const routes = [
+    {
+        path: '/',
+        redirect: '/login'
+    },
     {
         path: '/login',
         name: 'Login',
@@ -20,6 +25,8 @@ const routes = [
         name: 'AdminEstadisticas',
         component: () => import('../views/AdminEstadisticasView.vue'),
         meta: {requiresAuth: true, rol: 'ADMIN'}
+    },
+    {
         path: '/tutor/mascotas',
         name: 'TutorMascotas',
         component: () => import('../views/tutorMascotaView.vue'),
