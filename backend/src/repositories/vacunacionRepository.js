@@ -4,7 +4,7 @@ async function aplicarPlan({ idMascota, idVacuna, idVeterinario, idSede, fechaIn
     await pool.query(
         `CALL prc_aplicar_plan_vacunacion(
        $1::int, $2::int, $3::int, $4::int,
-       COALESCE($5::timestamp, CURRENT_TIMESTAMP),
+       COALESCE($5::timestamp, LOCALTIMESTAMP),
        $6::varchar, $7::varchar)`,
         [idMascota, idVacuna, idVeterinario, idSede, fechaInicio ?? null, modalidad, direccionDomicilio ?? null]
     );
