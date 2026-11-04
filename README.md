@@ -5,11 +5,11 @@ La logica vive en la base de datos, el backend expone un API REST protegida con 
 
 ## Integrantes
 
-Felipe Becerra
-María Belén Gajardo
-Maitané O.Hostens
-Catalina Parra
-Matías Rojas
+- Felipe Becerra
+- María Belén Gajardo
+- Maitané O.Hostens
+- Catalina Parra
+- Matías Rojas
 
 ## Arquitectura
 
