@@ -26,7 +26,7 @@ async function aplicarPlan(req,res){
             return res.status(400).json({ error: 'idVeterinario es obligatorio' });
 
         if(!modalidades.includes(modalidad))
-            return res.status(400).json({ error: `modalidad debe ser: ${MODALIDADES.join(' o ')}` });
+            return res.status(400).json({ error: `modalidad debe ser: ${modalidades.join(' o ')}` });
         if (modalidad === 'DOMICILIO' && !direccionDomicilio)
             return res.status(400).json({ error: 'Una cita a domicilio debe incluir dirección'});
         if (fechaInicio && isNaN(new Date(fechaInicio)))

@@ -18,7 +18,7 @@ async function getInventarios(idSede = null, idMedicamento = null) {
     return rows;
 }
 
-async function getInventarioPorId(sede, idMedicamento) {
+async function getInventarioPorId(idSede, idMedicamento) {
     const { rows } = await pool.query(
         `select ${columnasDetalle}
          from Inventario i

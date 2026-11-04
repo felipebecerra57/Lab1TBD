@@ -6,22 +6,22 @@ async function getMedicamentos(nombre = null, tipo = null){
     const {rows} = await pool.query(
         `select ${columnas}
         from Medicamento m
-        where ($1::text is null or m.nombre ilike '%' || $2 || '%')
-        and ($2::text is null or m.tipo = $1)
+        where ($1::text is null or m.nombre ilike '%' || $1 || '%')
+        and ($2::text is null or m.tipo = $2)
         order by m.nombre, m.tipo asc`,
-        [tipo]
+        [nombre ?? null, tipo ?? null]
     );
     return rows;
 }
 
 async function getMedicamentoPorId(idMedicamento){
-    const {row} = await pool.query(
+    const {rows} = await pool.query(
         `select ${columnas} 
         from Medicamento
         where idMedicamento = $1`,
         [idMedicamento]
     );
-    return row;
+    return rows[0];
 }
 
 
@@ -39,7 +39,7 @@ async function actualizarMedicamento(idMedicamento, nombre, tipo) {
     const { rowCount } = await pool.query(
         `update Medicamento
          set nombre = coalesce($1, nombre),
-             tipo = coalesce($2, tipo),
+             tipo = coalesce($2, tipo)
          where idMedicamento = $3`,
         [
             nombre ?? null,

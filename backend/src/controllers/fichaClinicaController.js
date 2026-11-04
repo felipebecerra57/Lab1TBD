@@ -36,7 +36,7 @@ async function crear(req, res){
     try{
         if (!req.body.idMascota) return res.status(404).json({ error: 'idMascota es obligatorio'});
         const id = await repo.crearFichaClinica(req.body);
-        res.status(201).json( await repo.getFichaPorMascota(id, null));
+        res.status(201).json( await repo.getPorId(id, null));
     } catch (e){
         console.error(e);
         if (e.code === '23505') return res.status(409).json({ error: 'La mascota ya tiene ficha clínica' });
