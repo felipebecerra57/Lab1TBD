@@ -17,7 +17,7 @@ const routes = [
     {
         path: '/tutor/mascotas',
         name: 'TutorMascotas',
-        component: () => import('../views/TutorMascotasView.vue'),
+        component: () => import('../views/tutorMascotaView.vue'),
         meta: { requiresAuth: true, rol: 'TUTOR' }
     }
 ];

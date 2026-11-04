@@ -50,7 +50,7 @@ const edad = computed(() =>
 .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; background: #fff; }
 header { display: flex; justify-content: space-between; align-items: center; }
 h2 { margin: 0; font-size: 1.2rem; }
-.especie { background: #e8f4ea; color: #2d6a3e; padding: 2px 10px; border-radius: 12px; font-size: 0.85rem; }
+.especie { background: #e8f4ea; color: #69ccd1; padding: 2px 10px; border-radius: 12px; font-size: 0.85rem; }
 ul { padding-left: 1.2rem; }
 button { cursor: pointer; padding: 6px 12px; }
 .ficha { margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed #ccc; }
