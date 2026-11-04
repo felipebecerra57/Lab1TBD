@@ -76,14 +76,14 @@ cd Lab1TBD
  
 ### 2. Crear la base de datos
  
-El script `ScriptCreacionVeterinaria.sql` crea todo (tablas, triggers, procedimientos, vista, índices) **y carga los datos de prueba**. Debe ejecutarse **una sola vez sobre una base de datos vacía**.
+El script `ScriptCreacionVeterinaria.sql` crea todo (tablas, triggers, procedimientos, vista, índices) y carga los datos de prueba. Debe ejecutarse una sola vez sobre una base de datos vacía.
  
 **Opción A: pgAdmin**
 1. Conectarse al servidor (clic en *Servers → PostgreSQL*, contraseña del usuario `postgres`).
 2. Clic derecho en *Databases → Create → Database…*, nombre `veterinaria`, *Save*.
 3. Seleccionar `veterinaria` y abrir *Tools → Query Tool*. Arriba debe decir `veterinaria/postgres@…`.
 4. Abrir `ScriptCreacionVeterinaria.sql` con el ícono de carpeta y ejecutar todo con **F5**.
-5. Debe terminar con `Query returned successfully`. Los avisos `truncate cascades to table …` y `materialized view … does not exist, skipping` son normales.
+5. Debe terminar con `Query returned successfully`.
 **Opción B: terminal**
 ```bash
 createdb -U postgres veterinaria
@@ -133,6 +133,23 @@ Vite muestra la dirección, normalmente `http://localhost:5173`. Abrir `http://l
 
 ---
 
+## Usuarios de prueba
+ 
+Los crea el propio script. Las contraseñas están guardadas con bcrypt.
+ 
+| Rol | Correo | Contraseña |
+|---|---|---|
+| ADMIN | `admin@veterinaria.cl` | `Admin123` |
+| ADMIN | `admin2@veterinaria.cl` | `Admin123` |
+| VET | `cperez@veterinaria.cl` | `Vet123` |
+| VET | `dsoto@veterinaria.cl` | `Vet123` |
+| VET | `mrojas@veterinaria.cl` | `Vet123` |
+| TUTOR | `ana.munoz@correo.cl` | `Tutor123` |
+| TUTOR | `jorge.diaz@correo.cl` | `Tutor123` |
+| TUTOR | `camila.reyes@correo.cl` | `Tutor123` |
+
+---
+
 ## Endpoints
  
 URL base: `http://localhost:3000/api`
@@ -143,30 +160,158 @@ URL base: `http://localhost:3000/api`
 Las respuestas se obtuvieron ejecutando la API con los datos de prueba del script. En las listas largas se muestran solo los primeros elementos.
  
 #### Iniciar sesión
+`POST /api/auth/login`
+```json
+{ "email": "admin@veterinaria.cl", "password": "Admin123" }
+```
+Respuesta `200`:
+```json
+{
+  "mensaje": "Login exitoso",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "rol": "ADMIN"
+}
+```
 
 #### Registrar un tutor
+`POST /api/auth/register`
+```json
+{ "email": "pedro@correo.cl", "password": "Pedro123", "rut": "21.444.555-6", "telefono": "+56999999999" }
+```
+Respuesta `201`:
+```json
+{ "mensaje": "Tutor registrado exitosamente", "idUsuario": 9 }
+```
 
 #### Crear un veterinario
-
+`POST /api/usuarios/veterinario` · ADMIN
+```json
+{
+  "email": "lvera@veterinaria.cl",
+  "password": "Vet123",
+  "nombreEmp": "Laura",
+  "apellidoEmp": "Vera",
+  "rut": "18.999.000-1",
+  "telefono": "+56912121212",
+  "especialidad": "Cardiología"
+}
+```
+Respuesta `201`:
+```json
+{ "mensaje": "Veterinario registrado exitosamente", "idUsuario": 10 }
+```
  
 #### Crear una sede
+`POST /api/sedes` · ADMIN
+```json
+{ "nombre": "Sede Ñuñoa", "calle": "Irarrázaval", "numero": 2100, "comuna": "Ñuñoa", "telefono": "+56223334444", "idAdmin": 1 }
+```
+Respuesta `201`:
+```json
+{ "idSede": 3, "nombre": "Sede Ñuñoa", "calle": "Irarrázaval", "numero": 2100, "comuna": "Ñuñoa", "telefono": "+56223334444", "idAdmin": 1 }
+```
 
-
-#### Registrar una mascota (como tutor)
-
+#### Registrar una mascota siendo tutor
+`POST /api/mascotas` · TUTOR (el `idTutor` se toma del token; un ADMIN debe enviarlo en el body)
+```json
+{ "nombre": "Pelusa", "idEspecie": 2, "anioNacimiento": 2024, "peso": 3.1 }
+```
+Respuesta `201`:
+```json
+{ "idMascota": 7, "nombre": "Pelusa", "idTutor": 6, "idEspecie": 2, "especie": "Gato", "anioNacimiento": 2024, "peso": "3.10" }
+```
 
 #### Vacunas vencidas o por vencer
-
-
-#### Aplicar un plan de vacunación
-
+`GET /api/mascotas/vacunas-pendientes` · respuesta `200` (extracto):
+```json
+[
+  {
+    "idMascota": 1, "mascota": "Firulais", "especie": "Perro",
+    "idTutor": 6, "emailTutor": "ana.munoz@correo.cl", "telefonoTutor": "+56966666666",
+    "idVacuna": 2, "vacuna": "Antirrábica", "ultimaDosis": 1, "totalDosis": 1,
+    "fechaUltimaDosis": "2025-10-19", "fechaProximaDosis": "2026-10-19",
+    "diasRestantes": -15, "estado": "VENCIDA"
+  },
+  {
+    "idMascota": 1, "mascota": "Firulais", "especie": "Perro",
+    "idVacuna": 5, "vacuna": "Tos de las perreras",
+    "fechaProximaDosis": "2026-11-18", "diasRestantes": 15, "estado": "POR_VENCER"
+  }
+]
+```
 
 #### Registrar una atención completa
+`POST /api/atenciones` · VET (usa el procedimiento `prd_registrar_atencion`; el veterinario se toma del token)
+```json
+{
+  "idMascota": 2,
+  "idSede": 1,
+  "motivoConsulta": "Control anual",
+  "peso": 4.3,
+  "tratamientoGeneral": "Sin tratamiento",
+  "diagnostico": { "nombre": "Sano", "detalle": "Sin hallazgos" },
+  "medicamentos": [
+    { "idMedicamento": 5, "cantidad": 1, "dosis": 1, "duracionMeses": 1 }
+  ]
+}
+```
+En vez de `idSede` se puede enviar `idCita`; en ese caso la cita queda como `REALIZADA`.
 
+Respuesta `201`:
+```json
+{
+  "idAtencion": 7, "idFicha": 2, "idMascota": 2, "idVeterinario": 3, "idCita": null,
+  "cerrada": false, "fecha": "2026-11-04T01:00:22.129Z",
+  "motivoConsulta": "Control anual", "peso": "4.30", "tratamientoGeneral": "Sin tratamiento",
+  "diagnosticos": [
+    {
+      "idDiagnostico": 7, "nombre": "Sano", "detalle": "Sin hallazgos",
+      "recetas": [
+        { "idDiagnostico": 7, "idMedicamento": 5, "medicamento": "Metronidazol 250 mg", "cantidad": 1, "dosis": 1, "duracionMeses": 1 }
+      ]
+    }
+  ]
+}
+```
 
 #### Receta rechazada por alergia (trigger)
+`POST /api/recetas` · VET. Firulais es alérgico a la amoxicilina y el medicamento 1 la contiene.
+```json
+{ "idDiagnostico": 1, "idMedicamento": 1, "cantidad": 1, "dosis": 2, "duracionMeses": 1 }
+```
+Respuesta `400`:
+```json
+{ "error": "ALERTA MÉDICA: La mascota es alérgica a un principio activo de este medicamento. Receta rechazada." }
+```
+
 #### Editar un diagnóstico (auditoría)
+`PUT /api/diagnosticos/1` · VET. La atención 1 está cerrada, así que el cambio queda registrado en `AuditoriaDiagnostico`.
+```json
+{ "nombre": "Esguince", "detalle": "Esguince de rodilla derecha, grado 1." }
+```
+Respuesta `200`:
+```json
+{ "idDiagnostico": 1, "idAtencion": 1, "nombre": "Esguince", "detalle": "Esguince de rodilla derecha, grado 1." }
+```
 
 #### Estadísticas de atención
+`GET /api/reportes/estadisticas` · ADMIN · respuesta `200` (extracto):
+```json
+[
+  { "especie": "Conejo", "sede": "Sede Providencia", "diagnostico": "Post operatorio", "cantidad_atenciones": 1 },
+  { "especie": "Gato", "sede": "Sede Maipú", "diagnostico": "Dermatitis alérgica", "cantidad_atenciones": 1 },
+  { "especie": "Perro", "sede": "Sede Providencia", "diagnostico": "Esguince", "cantidad_atenciones": 1 }
+]
+```
+Con un usuario que no es ADMIN, la respuesta es `403` 
 
 #### Crear una vacuna
+#### Crear una vacuna
+`POST /api/vacunas` · ADMIN (`intervaloDias` es obligatorio si `totalDosis` es mayor que 1)
+```json
+{ "nombreV": "Giardia", "totalDosis": 2, "intervaloDias": 21 }
+```
+Respuesta `201`:
+```json
+{ "idVacuna": 6, "nombreV": "Giardia", "totalDosis": 2, "intervaloDias": 21 }
+```
