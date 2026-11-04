@@ -7,6 +7,7 @@ require('./jobs/refrescarEstadisticas');
 // Rutas
 const authRoutes = require('./routes/authRoutes');
 const sedeRoutes = require('./routes/sede.routes');
+const citaRoutes = require('./routes/citaMedica.routes');
 const reporteRoutes = require('./routes/reporteRoutes');
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.json());
 // Montaje de rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/sedes', sedeRoutes);
+app.use('/api/citas', citaRoutes);
 app.use('/api/reportes', reporteRoutes);
 app.use('/api/usuarios', require('./routes/usuario.routes'));
 app.use('/api/diagnosticos', require('./routes/diagnostico.routes'));
