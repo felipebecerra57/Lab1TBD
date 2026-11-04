@@ -9,7 +9,7 @@ async function getMedicamentos(nombre = null, tipo = null){
         where ($1::text is null or m.nombre ilike '%' || $2 || '%')
         and ($2::text is null or m.tipo = $1)
         order by m.nombre, m.tipo asc`,
-        [tipo]
+        [nombre, tipo]
     );
     return rows;
 }
