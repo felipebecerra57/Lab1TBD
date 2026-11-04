@@ -1,4 +1,4 @@
-const { Pool } = require('../config/db');
+const pool = require('../config/db');
 
 // 1. Insertar en la tabla abuela (Usuario)
 async function insertarUsuarioBase(client, email, passwordHash) {
@@ -64,7 +64,7 @@ async function obtenerPersonalPorId(id) {
 
 async function obtenerVeterinarios() {
     const { rows } = await pool.query(`
-        SELECT u.idUsuario, u.email, e.nombreEmp, e.apellidoEmp, e.rut, e.telefono, v.especialidad 
+        SELECT u.idUsuario, u.email, e.nombreEmp, e.apellidoEmp, e.rut, e.telefono, e.idSede, v.especialidad 
         FROM Usuario u 
         JOIN Empleado e ON u.idUsuario = e.idEmpleado
         JOIN Veterinario v ON e.idEmpleado = v.idVeterinario

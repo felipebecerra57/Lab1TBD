@@ -86,6 +86,7 @@ async function getPersonalById(req, res) {
 async function getVeterinarios(req, res) {
     try {
         const vets = await repo.obtenerVeterinarios();
+        console.log('Veterinarios obtenidos de la BD:', vets);
         res.json(vets);
     } catch (e) {
         res.status(500).json({ error: 'Error al obtener veterinarios' });
