@@ -16,6 +16,10 @@ const routes = [
         meta: { requiresAuth: true, rol: 'ADMIN' }
     },
     {
+        path: '/admin/estadisticas',
+        name: 'AdminEstadisticas',
+        component: () => import('../views/AdminEstadisticasView.vue'),
+        meta: {requiresAuth: true, rol: 'ADMIN'}
         path: '/tutor/mascotas',
         name: 'TutorMascotas',
         component: () => import('../views/tutorMascotaView.vue'),
@@ -33,6 +37,7 @@ const routes = [
         name: 'Agenda',
         component: AgendaView
     }
+
 ];
 
 const router = createRouter({
